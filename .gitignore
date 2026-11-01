@@ -1,0 +1,20 @@
+﻿# Build outputs and local workspace state
+target/
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.env
+*.log
+*.tmp
+.idea/
+.vscode/
+.DS_Store
+/apps/flutter/.dart_tool/
+/apps/flutter/.flutter-plugins-dependencies
+/apps/flutter/build/
+/apps/flutter/windows/flutter/ephemeral/
+/apps/flutter/linux/flutter/ephemeral/

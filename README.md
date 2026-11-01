@@ -27,4 +27,3 @@ flutter build apk --dart-define=HARMONEY_PRO_DOWNLOAD_URL=https://github.com/OWN
 ```
 
 The download URL defaults to empty until the official Pro release page is available. Configure it with the `HARMONEY_PRO_DOWNLOAD_URL` build define; otherwise the app explains that the link is not available yet.
-

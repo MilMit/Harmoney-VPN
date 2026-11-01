@@ -1,0 +1,488 @@
+{
+  "@@locale": "es",
+  "appTitle": "Harmoney VPN",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "splashSubtitle": "Creado para un acceso seguro a Internet,\npara todos, en cualquier lugar",
+  "@splashSubtitle": {
+    "description": "Subtitle shown on splash screen"
+  },
+  "connect": "Conectar",
+  "@connect": {
+    "description": "Connect button text"
+  },
+  "disconnect": "Desconectar",
+  "@disconnect": {
+    "description": "Disconnect button text"
+  },
+  "connected": "Conectado",
+  "@connected": {
+    "description": "Connected status text"
+  },
+  "disconnected": "Desconectado",
+  "@disconnected": {
+    "description": "Disconnected status text"
+  },
+  "connecting": "Conectando",
+  "@connecting": {
+    "description": "Connecting status text"
+  },
+  "connectingVia": "Conectando a través de {groupName}",
+  "@connectingVia": {
+    "description": "Connecting status with group name",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "switchingMethod": "CAMBIANDO MÉTODO",
+  "@switchingMethod": {
+    "description": "Status shown when switching connection method"
+  },
+  "speedTest": "Prueba de velocidad",
+  "@speedTest": {
+    "description": "Speed test feature label"
+  },
+  "download": "DESCARGA",
+  "@download": {
+    "description": "Download speed label"
+  },
+  "upload": "SUBIDA",
+  "@upload": {
+    "description": "Upload speed label"
+  },
+  "ping": "PING",
+  "@ping": {
+    "description": "Ping label"
+  },
+  "latency": "LATENCIA",
+  "@latency": {
+    "description": "Latency label"
+  },
+  "jitter": "JITTER",
+  "@jitter": {
+    "description": "Jitter label"
+  },
+  "packetLoss": "PÉRDIDA",
+  "@packetLoss": {
+    "description": "Packet loss label"
+  },
+  "tapHere": "TOCA AQUÍ",
+  "@tapHere": {
+    "description": "Instruction to tap to start speed test"
+  },
+  "settings": "Ajustes",
+  "@settings": {
+    "description": "Settings menu label"
+  },
+  "introduction": "Introducción",
+  "@introduction": {
+    "description": "Introduction menu item"
+  },
+  "privacyPolicy": "Política de privacidad",
+  "@privacyPolicy": {
+    "description": "Privacy policy menu item"
+  },
+  "termsAndConditions": "Términos y condiciones",
+  "@termsAndConditions": {
+    "description": "Terms and conditions menu item"
+  },
+  "ourWebsite": "Nuestro sitio web",
+  "@ourWebsite": {
+    "description": "Our website menu item"
+  },
+  "marketplace": "Mercado",
+  "@marketplace": {
+    "description": "Marketplace menu item"
+  },
+  "telegramBot": "Bot de Telegram",
+  "@telegramBot": {
+    "description": "Telegram bot menu item"
+  },
+  "sourceCode": "Código fuente",
+  "@sourceCode": {
+    "description": "Source code link"
+  },
+  "openSourceLicenses": "Licencias de código abierto",
+  "@openSourceLicenses": {
+    "description": "Open source licenses link"
+  },
+  "betaCommunity": "Comunidad Beta",
+  "@betaCommunity": {
+    "description": "Beta community link"
+  },
+  "close": "Cerrar",
+  "@close": {
+    "description": "Close button text"
+  },
+  "copyLogs": "Copiar registros",
+  "@copyLogs": {
+    "description": "Copy logs button text"
+  },
+  "logsCopied": "Registros copiados al portapapeles",
+  "@logsCopied": {
+    "description": "Message shown when logs are copied"
+  },
+  "appLogs": "Registros de la aplicación",
+  "@appLogs": {
+    "description": "App logs panel title"
+  },
+  "autoRefresh": "Autorrecarga",
+  "@autoRefresh": {
+    "description": "Auto-refresh toggle label"
+  },
+  "clear": "Limpiar",
+  "@clear": {
+    "description": "Clear logs button text"
+  },
+  "quickMenu": "Menú rápido",
+  "@quickMenu": {
+    "description": "Quick menu label"
+  },
+  "noInternet": "Sin Internet",
+  "@noInternet": {
+    "description": "No internet connection status"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Error status"
+  },
+  "loading": "Cargando",
+  "@loading": {
+    "description": "Loading status"
+  },
+  "analyzing": "Analizando",
+  "@analyzing": {
+    "description": "Analyzing status"
+  },
+  "mbps": "Mbps",
+  "@mbps": {
+    "description": "Megabits per second unit"
+  },
+  "ms": "ms",
+  "@ms": {
+    "description": "Milliseconds unit"
+  },
+  "language": "Idioma",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "tips": "CONSEJOS",
+  "@tips": {
+    "description": "Tips section header"
+  },
+  "english": "Inglés",
+  "@english": {
+    "description": "English language name"
+  },
+  "chinese": "中文 (chino)",
+  "@chinese": {
+    "description": "Chinese language name"
+  },
+  "gotIt": "Entendido",
+  "@gotIt": {
+    "description": "Got it button text"
+  },
+  "learnMore": "MÁS INFORMACIÓN",
+  "@learnMore": {
+    "description": "Learn more section title"
+  },
+  "harmoneyGoal": "El objetivo de Harmoney es garantizar el acceso seguro a la información pública y proporcionar una experiencia de navegación gratuita.",
+  "@harmoneyGoal": {
+    "description": "Description of Harmoney goal"
+  },
+  "statusIsChilling": "es escalofriante.",
+  "@statusIsChilling": {
+    "description": "Status message - chilling state"
+  },
+  "statusIs": "es",
+  "@statusIs": {
+    "description": "Status connector word"
+  },
+  "statusFailed": "fallido.",
+  "@statusFailed": {
+    "description": "Status message - failed state"
+  },
+  "statusHas": "tiene",
+  "@statusHas": {
+    "description": "Status connector word"
+  },
+  "statusIsReturning": "está devolviendo",
+  "@statusIsReturning": {
+    "description": "Status message - returning state"
+  },
+  "statusToStandbyMode": "al modo de espera.",
+  "@statusToStandbyMode": {
+    "description": "Status message - standby mode text"
+  },
+  "statusPluggingIn": "conectando...",
+  "@statusPluggingIn": {
+    "description": "Status message - plugging in state"
+  },
+  "statusPoweredUp": "encendido",
+  "@statusPoweredUp": {
+    "description": "Status message - powered up state"
+  },
+  "statusDoingScience": "haciendo ciencia...",
+  "@statusDoingScience": {
+    "description": "Status message - working state"
+  },
+  "statusExitedMatrix": "salió de la matriz",
+  "@statusExitedMatrix": {
+    "description": "Status message - disconnected state"
+  },
+  "statusSorry": "lo sentimos :(",
+  "@statusSorry": {
+    "description": "Status message - apology"
+  },
+  "statusConnectAlready": "Conéctate ya",
+  "@statusConnectAlready": {
+    "description": "Status message - connect prompt"
+  },
+  "statusTestingSpeed": "probando velocidad...",
+  "@statusTestingSpeed": {
+    "description": "Status message - speed test in progress"
+  },
+  "statusIsReady": "está listo",
+  "@statusIsReady": {
+    "description": "Status message - ready state"
+  },
+  "statusIsInTrouble": "está en problemas.",
+  "@statusIsInTrouble": {
+    "description": "Status connector word when DXcore handshake fails"
+  },
+  "statusDXcoreDown": "DXcore abajo.",
+  "@statusDXcoreDown": {
+    "description": "Status message shown when DXcore cannot be verified"
+  },
+  "statusToSpeedTest": "para probar la velocidad",
+  "@statusToSpeedTest": {
+    "description": "Status message - ready for speed test"
+  },
+  "statusYoursToShape": "el tuyo para darle forma",
+  "@statusYoursToShape": {
+    "description": "Settings status message"
+  },
+  "settingsConnectionMethod": "MÉTODO DE CONEXIÓN",
+  "@settingsConnectionMethod": {
+    "description": "Settings section - connection method"
+  },
+  "settingsEscapeMode": "MODO DE ESCAPE",
+  "@settingsEscapeMode": {
+    "description": "Settings section - escape mode"
+  },
+  "settingsDestination": "DESTINO",
+  "@settingsDestination": {
+    "description": "Settings section - destination"
+  },
+  "settingsSplitTunnel": "Túnel dividido",
+  "@settingsSplitTunnel": {
+    "description": "Settings section - split tunnel"
+  },
+  "settingsKillSwitch": "Interruptor de corte",
+  "@settingsKillSwitch": {
+    "description": "Settings section - kill switch"
+  },
+  "settingsDeepScan": "ESCANEO PROFUNDO",
+  "@settingsDeepScan": {
+    "description": "Settings section - deep scan"
+  },
+  "settingsHealthCheck": "VERIFICACIÓN DE ESTADO",
+  "@settingsHealthCheck": {
+    "description": "Settings section - health check"
+  },
+  "settingsIncluded": "INCLUIDO",
+  "@settingsIncluded": {
+    "description": "Settings label - included items"
+  },
+  "settingsAtLeastOneCoreRequired": "Al menos un núcleo debe permanecer habilitado",
+  "@settingsAtLeastOneCoreRequired": {
+    "description": "Settings error message - core requirement"
+  },
+  "settingsResetToDefault": "RESET",
+  "@settingsResetToDefault": {
+    "description": "Settings button - reset to default"
+  },
+  "offlineFlowlineMessage": "Las actualizaciones de Flowline se han pausado porque actualmente se está utilizando la versión sin conexión.",
+  "@offlineFlowlineMessage": {
+    "description": "Offline flowline notification message"
+  },
+  "offlineFlowlineUndo": "DESHACER",
+  "@offlineFlowlineUndo": {
+    "description": "Offline flowline undo button"
+  },
+  "updateAvailable": "Actualización disponible",
+  "@updateAvailable": {
+    "description": "Update dialog title - optional update"
+  },
+  "updateRequired": "Actualización requerida",
+  "@updateRequired": {
+    "description": "Update dialog title - mandatory update"
+  },
+  "updateOptionalMessage": "Para aprovechar al máximo la aplicación y disfrutar de las últimas mejoras, actualice a la versión más reciente.",
+  "@updateOptionalMessage": {
+    "description": "Update dialog message - optional update"
+  },
+  "updateRequiredMessage": "Para continuar usando Harmoney, actualice a la última versión. Esta actualización incluye mejoras críticas y es necesaria para la funcionalidad de la aplicación.",
+  "@updateRequiredMessage": {
+    "description": "Update dialog message - mandatory update"
+  },
+  "updateNow": "Actualizar ahora",
+  "@updateNow": {
+    "description": "Update dialog button - update action"
+  },
+  "notNow": "Ahora no",
+  "@notNow": {
+    "description": "Update dialog button - dismiss action"
+  },
+  "updateMethods": "Métodos de actualización",
+  "@updateMethods": {
+    "description": "Sync menu - update methods option"
+  },
+  "importConfig": "Importar configuración",
+  "@importConfig": {
+    "description": "Sync menu - import configuration file option"
+  },
+  "synchronization": "Sincronización",
+  "@synchronization": {
+    "description": "Sync menu label"
+  },
+  "settingsDonation": "Donación",
+  "@settingsDonation": {
+    "description": "Donation widget title"
+  },
+  "settingsDonationDescription": "Ayúdanos a derribar los muros de la censura digital y el filtrado de Internet.",
+  "@settingsDonationDescription": {
+    "description": "Donation widget description text"
+  },
+  "authenticationRequired": "Se requiere autenticación",
+  "@authenticationRequired": {
+    "description": "Premium login dialog title"
+  },
+  "premiumLoginDescription": "Para acceder a sus suscripciones Premium, debe iniciar sesión o crear una cuenta a través del sitio web Harmoney.",
+  "@premiumLoginDescription": {
+    "description": "Premium login dialog description"
+  },
+  "email": "Correo electrónico",
+  "@email": {
+    "description": "Email field label"
+  },
+  "emailHint": "ejemplo@dominio.com",
+  "@emailHint": {
+    "description": "Email field hint text"
+  },
+  "emailValidation": "Por favor ingrese su correo electrónico",
+  "@emailValidation": {
+    "description": "Email validation error message"
+  },
+  "password": "Contraseña",
+  "@password": {
+    "description": "Password field label"
+  },
+  "passwordHint": "Ingrese su contraseña",
+  "@passwordHint": {
+    "description": "Password field hint text"
+  },
+  "passwordValidation": "Por favor ingrese su contraseña",
+  "@passwordValidation": {
+    "description": "Password validation error message"
+  },
+  "passwordMinLength": "La contraseña debe tener al menos 6 caracteres",
+  "@passwordMinLength": {
+    "description": "Password minimum length validation error"
+  },
+  "login": "Iniciar sesión",
+  "@login": {
+    "description": "Login button text"
+  },
+  "noAccount": "¿No tienes una cuenta?",
+  "@noAccount": {
+    "description": "Sign up prompt text"
+  },
+  "signUp": "Regístrate",
+  "@signUp": {
+    "description": "Sign up link text"
+  },
+  "loginFailed": "Error de inicio de sesion. Por favor verifique sus credenciales e inténtelo nuevamente.",
+  "@loginFailed": {
+    "description": "Login failed toast message"
+  },
+  "loginSuccess": "¡Inicie sesión correctamente!",
+  "@loginSuccess": {
+    "description": "Login success toast message"
+  },
+  "code": "Código",
+  "@code": {
+    "description": "Code field label"
+  },
+  "codeHint": "Introduce tu código de acceso",
+  "@codeHint": {
+    "description": "Code field hint text"
+  },
+  "codeValidation": "Por favor introduce tu código",
+  "@codeValidation": {
+    "description": "Code validation error message"
+  },
+  "premiumLoginByCodeDescription": "Para acceder a sus suscripciones Premium, ingrese el código de acceso que se le proporcionó.",
+  "@premiumLoginByCodeDescription": {
+    "description": "Premium login by code dialog description"
+  },
+  "havingTrouble": "¿Tienes problemas?",
+  "@havingTrouble": {
+    "description": "Premium trouble dialog title"
+  },
+  "signedInAs": "Actualmente ha iniciado sesión con la dirección de correo electrónico",
+  "@signedInAs": {
+    "description": "Premium trouble dialog - signed in message prefix"
+  },
+  "premiumImportDescription": ". Si sus suscripciones Premium no se pueden cargar debido a restricciones de Internet y no puede conectarse utilizando los métodos disponibles, puede importar el archivo obtenido de Marketplace a la aplicación.",
+  "@premiumImportDescription": {
+    "description": "Premium trouble dialog - import instructions"
+  },
+  "planningToExit": "¿Planea salir?",
+  "@planningToExit": {
+    "description": "Premium trouble dialog - sign out prompt"
+  },
+  "signOut": "Cerrar sesión",
+  "@signOut": {
+    "description": "Sign out link text"
+  },
+  "signOutSuccess": "¡Cerrar sesión correctamente!",
+  "@signOutSuccess": {
+    "description": "Sign out success toast message"
+  },
+  "settingsMarketplace": "Marketplace",
+  "@settingsMarketplace": {
+    "description": "Premium widget - marketplace title"
+  },
+  "marketplaceDescription": "Explore configuraciones seguras de VPN de proveedores confiables.",
+  "@marketplaceDescription": {
+    "description": "Premium widget - marketplace description"
+  },
+  "loggedIn": "INICIÓ SESIÓN",
+  "@loggedIn": {
+    "description": "Premium widget - logged in status"
+  },
+  "loginOrRegister": "INICIAR SESIÓN O REGÍSTRESE",
+  "@loginOrRegister": {
+    "description": "Premium widget - login/register prompt"
+  },
+  "loginByCode": "Iniciar sesión por código",
+  "@loginByCode": {
+    "description": "Login by code button text"
+  },
+  "backToLoginByEmail": "Volver a iniciar sesión por correo electrónico",
+  "@backToLoginByEmail": {
+    "description": "Back to email login button text"
+  },
+  "connectionRequired": "Conexión requerida",
+  "@connectionRequired": {
+    "description": "Connection required dialog title"
+  },
+  "connectionRequiredDescription": "Para completar un proceso de inicio de sesión o registro seguro, primero debe establecer una conexión utilizando uno de los métodos de conexión disponibles.",
+  "@connectionRequiredDescription": {
+    "description": "Connection required dialog description"
+  }
+}

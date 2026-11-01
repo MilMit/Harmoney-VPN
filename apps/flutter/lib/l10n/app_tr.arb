@@ -1,0 +1,488 @@
+{
+  "@@locale": "tr",
+  "appTitle": "Harmoney VPN",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "splashSubtitle": "Güvenli internet erişimi için tasarlandı,\nherkes için, her yerde",
+  "@splashSubtitle": {
+    "description": "Subtitle shown on splash screen"
+  },
+  "connect": "Bağlan",
+  "@connect": {
+    "description": "Connect button text"
+  },
+  "disconnect": "Bağlantıyı Kes",
+  "@disconnect": {
+    "description": "Disconnect button text"
+  },
+  "connected": "Bağlandı",
+  "@connected": {
+    "description": "Connected status text"
+  },
+  "disconnected": "Bağlantı Kesildi",
+  "@disconnected": {
+    "description": "Disconnected status text"
+  },
+  "connecting": "Bağlanıyor",
+  "@connecting": {
+    "description": "Connecting status text"
+  },
+  "connectingVia": "{groupName} üzerinden bağlanılıyor",
+  "@connectingVia": {
+    "description": "Connecting status with group name",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "switchingMethod": "YÖNTEM DEĞİŞTİRİLİYOR",
+  "@switchingMethod": {
+    "description": "Status shown when switching connection method"
+  },
+  "speedTest": "Hız Testi",
+  "@speedTest": {
+    "description": "Speed test feature label"
+  },
+  "download": "İNDİRME",
+  "@download": {
+    "description": "Download speed label"
+  },
+  "upload": "YÜKLEME",
+  "@upload": {
+    "description": "Upload speed label"
+  },
+  "ping": "PİNG",
+  "@ping": {
+    "description": "Ping label"
+  },
+  "latency": "GECİKME",
+  "@latency": {
+    "description": "Latency label"
+  },
+  "jitter": "DALGALANMA",
+  "@jitter": {
+    "description": "Jitter label"
+  },
+  "packetLoss": "PAKET KAYBI",
+  "@packetLoss": {
+    "description": "Packet loss label"
+  },
+  "tapHere": "BURAYA DOKUNUN",
+  "@tapHere": {
+    "description": "Instruction to tap to start speed test"
+  },
+  "settings": "Ayarlar",
+  "@settings": {
+    "description": "Settings menu label"
+  },
+  "introduction": "Giriş",
+  "@introduction": {
+    "description": "Introduction menu item"
+  },
+  "privacyPolicy": "Gizlilik Politikası",
+  "@privacyPolicy": {
+    "description": "Privacy policy menu item"
+  },
+  "termsAndConditions": "Şartlar ve Koşullar",
+  "@termsAndConditions": {
+    "description": "Terms and conditions menu item"
+  },
+  "ourWebsite": "Web Sitemiz",
+  "@ourWebsite": {
+    "description": "Our website menu item"
+  },
+  "marketplace": "Pazar Yeri",
+  "@marketplace": {
+    "description": "Marketplace menu item"
+  },
+  "telegramBot": "Telegram Botu",
+  "@telegramBot": {
+    "description": "Telegram bot menu item"
+  },
+  "sourceCode": "Kaynak Kodu",
+  "@sourceCode": {
+    "description": "Source code link"
+  },
+  "openSourceLicenses": "Açık Kaynak Lisansları",
+  "@openSourceLicenses": {
+    "description": "Open source licenses link"
+  },
+  "betaCommunity": "Beta Topluluğu",
+  "@betaCommunity": {
+    "description": "Beta community link"
+  },
+  "close": "Kapat",
+  "@close": {
+    "description": "Close button text"
+  },
+  "copyLogs": "Günlükleri Kopyala",
+  "@copyLogs": {
+    "description": "Copy logs button text"
+  },
+  "logsCopied": "Günlükler panoya kopyalandı",
+  "@logsCopied": {
+    "description": "Message shown when logs are copied"
+  },
+  "appLogs": "Uygulama Günlükleri",
+  "@appLogs": {
+    "description": "App logs panel title"
+  },
+  "autoRefresh": "Otomatik Yenile",
+  "@autoRefresh": {
+    "description": "Auto-refresh toggle label"
+  },
+  "clear": "Temizle",
+  "@clear": {
+    "description": "Clear logs button text"
+  },
+  "quickMenu": "Hızlı Menü",
+  "@quickMenu": {
+    "description": "Quick menu label"
+  },
+  "noInternet": "İnternet Yok",
+  "@noInternet": {
+    "description": "No internet connection status"
+  },
+  "error": "Hata",
+  "@error": {
+    "description": "Error status"
+  },
+  "loading": "Yükleniyor",
+  "@loading": {
+    "description": "Loading status"
+  },
+  "analyzing": "Analiz Ediliyor",
+  "@analyzing": {
+    "description": "Analyzing status"
+  },
+  "mbps": "Mbps",
+  "@mbps": {
+    "description": "Megabits per second unit"
+  },
+  "ms": "ms",
+  "@ms": {
+    "description": "Milliseconds unit"
+  },
+  "language": "Dil",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "tips": "İPUÇLARI",
+  "@tips": {
+    "description": "Tips section header"
+  },
+  "english": "İngilizce",
+  "@english": {
+    "description": "English language name"
+  },
+  "chinese": "中文 (Çince)",
+  "@chinese": {
+    "description": "Chinese language name"
+  },
+  "gotIt": "Anladım",
+  "@gotIt": {
+    "description": "Got it button text"
+  },
+  "learnMore": "DAHA FAZLA BİLGİ EDİNİN",
+  "@learnMore": {
+    "description": "Learn more section title"
+  },
+  "harmoneyGoal": "Harmoney'nin amacı, kamuya açık bilgilere güvenli erişim sağlamak ve ücretsiz bir tarama deneyimi sağlamaktır.",
+  "@harmoneyGoal": {
+    "description": "Description of Harmoney goal"
+  },
+  "statusIsChilling": "tüyler ürpertici.",
+  "@statusIsChilling": {
+    "description": "Status message - chilling state"
+  },
+  "statusIs": ",",
+  "@statusIs": {
+    "description": "Status connector word"
+  },
+  "statusFailed": "başarısız oldu.",
+  "@statusFailed": {
+    "description": "Status message - failed state"
+  },
+  "statusHas": "",
+  "@statusHas": {
+    "description": "Status connector word"
+  },
+  "statusIsReturning": ",",
+  "@statusIsReturning": {
+    "description": "Status message - returning state"
+  },
+  "statusToStandbyMode": "'yi bekleme moduna döndürüyor.",
+  "@statusToStandbyMode": {
+    "description": "Status message - standby mode text"
+  },
+  "statusPluggingIn": "takılıyor ...",
+  "@statusPluggingIn": {
+    "description": "Status message - plugging in state"
+  },
+  "statusPoweredUp": "çalıştırılıyor",
+  "@statusPoweredUp": {
+    "description": "Status message - powered up state"
+  },
+  "statusDoingScience": "bilim yapıyorum...",
+  "@statusDoingScience": {
+    "description": "Status message - working state"
+  },
+  "statusExitedMatrix": "",
+  "@statusExitedMatrix": {
+    "description": "Status message - disconnected state"
+  },
+  "statusSorry": "matrisinden çıktık özür dileriz :(",
+  "@statusSorry": {
+    "description": "Status message - apology"
+  },
+  "statusConnectAlready": "Zaten bağlanın",
+  "@statusConnectAlready": {
+    "description": "Status message - connect prompt"
+  },
+  "statusTestingSpeed": "test hızı...",
+  "@statusTestingSpeed": {
+    "description": "Status message - speed test in progress"
+  },
+  "statusIsReady": "hazır",
+  "@statusIsReady": {
+    "description": "Status message - ready state"
+  },
+  "statusIsInTrouble": "'nin başı dertte.",
+  "@statusIsInTrouble": {
+    "description": "Status connector word when DXcore handshake fails"
+  },
+  "statusDXcoreDown": "DXcore aşağı.",
+  "@statusDXcoreDown": {
+    "description": "Status message shown when DXcore cannot be verified"
+  },
+  "statusToSpeedTest": "hız testi için",
+  "@statusToSpeedTest": {
+    "description": "Status message - ready for speed test"
+  },
+  "statusYoursToShape": "sizin şekillendirmeniz için",
+  "@statusYoursToShape": {
+    "description": "Settings status message"
+  },
+  "settingsConnectionMethod": "BAĞLANTI YÖNTEMİ",
+  "@settingsConnectionMethod": {
+    "description": "Settings section - connection method"
+  },
+  "settingsEscapeMode": "KAÇIŞ MODU",
+  "@settingsEscapeMode": {
+    "description": "Settings section - escape mode"
+  },
+  "settingsDestination": "HEDEF",
+  "@settingsDestination": {
+    "description": "Settings section - destination"
+  },
+  "settingsSplitTunnel": "Bölünmüş Tünel",
+  "@settingsSplitTunnel": {
+    "description": "Settings section - split tunnel"
+  },
+  "settingsKillSwitch": "Acil Durum Kesicisi",
+  "@settingsKillSwitch": {
+    "description": "Settings section - kill switch"
+  },
+  "settingsDeepScan": "DERİN TARAMA",
+  "@settingsDeepScan": {
+    "description": "Settings section - deep scan"
+  },
+  "settingsHealthCheck": "SAĞLIK KONTROLÜ",
+  "@settingsHealthCheck": {
+    "description": "Settings section - health check"
+  },
+  "settingsIncluded": "DAHİL",
+  "@settingsIncluded": {
+    "description": "Settings label - included items"
+  },
+  "settingsAtLeastOneCoreRequired": "En az bir çekirdek etkin kalmalıdır",
+  "@settingsAtLeastOneCoreRequired": {
+    "description": "Settings error message - core requirement"
+  },
+  "settingsResetToDefault": "RESET",
+  "@settingsResetToDefault": {
+    "description": "Settings button - reset to default"
+  },
+  "offlineFlowlineMessage": "Çevrimdışı sürüm şu anda kullanıldığından Flowline güncellemeleri duraklatıldı.",
+  "@offlineFlowlineMessage": {
+    "description": "Offline flowline notification message"
+  },
+  "offlineFlowlineUndo": "GERİ AL",
+  "@offlineFlowlineUndo": {
+    "description": "Offline flowline undo button"
+  },
+  "updateAvailable": "Güncelleme mevcut",
+  "@updateAvailable": {
+    "description": "Update dialog title - optional update"
+  },
+  "updateRequired": "Güncelleme gerekli",
+  "@updateRequired": {
+    "description": "Update dialog title - mandatory update"
+  },
+  "updateOptionalMessage": "Uygulamadan en iyi şekilde yararlanmak ve en son iyileştirmelerin keyfini çıkarmak için lütfen en yeni sürüme güncelleyin.",
+  "@updateOptionalMessage": {
+    "description": "Update dialog message - optional update"
+  },
+  "updateRequiredMessage": "Harmoney'yi kullanmaya devam etmek için lütfen en son sürüme güncelleyin. Bu güncelleme kritik iyileştirmeler içerir ve uygulamanın işlevselliği için gereklidir.",
+  "@updateRequiredMessage": {
+    "description": "Update dialog message - mandatory update"
+  },
+  "updateNow": "Şimdi güncelle",
+  "@updateNow": {
+    "description": "Update dialog button - update action"
+  },
+  "notNow": "Şimdi değil",
+  "@notNow": {
+    "description": "Update dialog button - dismiss action"
+  },
+  "updateMethods": "Güncelleme Yöntemleri",
+  "@updateMethods": {
+    "description": "Sync menu - update methods option"
+  },
+  "importConfig": "Yapılandırmayı İçe Aktar",
+  "@importConfig": {
+    "description": "Sync menu - import configuration file option"
+  },
+  "synchronization": "Senkronizasyon",
+  "@synchronization": {
+    "description": "Sync menu label"
+  },
+  "settingsDonation": "Bağış",
+  "@settingsDonation": {
+    "description": "Donation widget title"
+  },
+  "settingsDonationDescription": "Dijital sansürün ve internet filtrelemenin duvarlarını yıkmamıza yardımcı olun.",
+  "@settingsDonationDescription": {
+    "description": "Donation widget description text"
+  },
+  "authenticationRequired": "Kimlik Doğrulaması Gerekli",
+  "@authenticationRequired": {
+    "description": "Premium login dialog title"
+  },
+  "premiumLoginDescription": "Premium aboneliklerinize erişmek için, Harmoney web sitesi aracılığıyla oturum açmanız veya bir hesap oluşturmanız gerekir.",
+  "@premiumLoginDescription": {
+    "description": "Premium login dialog description"
+  },
+  "email": "E-posta",
+  "@email": {
+    "description": "Email field label"
+  },
+  "emailHint": "example@domain.com",
+  "@emailHint": {
+    "description": "Email field hint text"
+  },
+  "emailValidation": "Lütfen e-posta adresinizi girin",
+  "@emailValidation": {
+    "description": "Email validation error message"
+  },
+  "password": "Şifre",
+  "@password": {
+    "description": "Password field label"
+  },
+  "passwordHint": "Şifrenizi girin",
+  "@passwordHint": {
+    "description": "Password field hint text"
+  },
+  "passwordValidation": "Lütfen şifrenizi girin",
+  "@passwordValidation": {
+    "description": "Password validation error message"
+  },
+  "passwordMinLength": "Şifre en az 6 karakterden oluşmalıdır",
+  "@passwordMinLength": {
+    "description": "Password minimum length validation error"
+  },
+  "login": "Giriş Yap",
+  "@login": {
+    "description": "Login button text"
+  },
+  "noAccount": "Hesabınız yok mu?",
+  "@noAccount": {
+    "description": "Sign up prompt text"
+  },
+  "signUp": "Kayıt ol",
+  "@signUp": {
+    "description": "Sign up link text"
+  },
+  "loginFailed": "Giriş başarısız oldu. Lütfen kimlik bilgilerinizi kontrol edip tekrar deneyin.",
+  "@loginFailed": {
+    "description": "Login failed toast message"
+  },
+  "loginSuccess": "Giriş başarılı!",
+  "@loginSuccess": {
+    "description": "Login success toast message"
+  },
+  "code": "Kodu",
+  "@code": {
+    "description": "Code field label"
+  },
+  "codeHint": "Erişim kodunuzu giriniz",
+  "@codeHint": {
+    "description": "Code field hint text"
+  },
+  "codeValidation": "Lütfen kodunuzu giriniz",
+  "@codeValidation": {
+    "description": "Code validation error message"
+  },
+  "premiumLoginByCodeDescription": "Premium aboneliklerinize erişmek için size verilen erişim kodunu girin.",
+  "@premiumLoginByCodeDescription": {
+    "description": "Premium login by code dialog description"
+  },
+  "havingTrouble": "Sorun mu yaşıyorsunuz?",
+  "@havingTrouble": {
+    "description": "Premium trouble dialog title"
+  },
+  "signedInAs": "Şu anda",
+  "@signedInAs": {
+    "description": "Premium trouble dialog - signed in message prefix"
+  },
+  "premiumImportDescription": "e-posta adresiyle oturum açmış durumdasınız. Premium abonelikleriniz internet kısıtlamaları nedeniyle yüklenemiyorsa ve mevcut yöntemleri kullanarak bağlanamıyorsanız Marketplace'ten aldığınız dosyayı uygulamaya aktarabilirsiniz.",
+  "@premiumImportDescription": {
+    "description": "Premium trouble dialog - import instructions"
+  },
+  "planningToExit": "Çıkmayı mı planlıyorsunuz?",
+  "@planningToExit": {
+    "description": "Premium trouble dialog - sign out prompt"
+  },
+  "signOut": "Çıkış Yap",
+  "@signOut": {
+    "description": "Sign out link text"
+  },
+  "signOutSuccess": "Başarıyla çıkış yapıldı!",
+  "@signOutSuccess": {
+    "description": "Sign out success toast message"
+  },
+  "settingsMarketplace": "Pazaryeri",
+  "@settingsMarketplace": {
+    "description": "Premium widget - marketplace title"
+  },
+  "marketplaceDescription": "Güvenilir tedarikçilerden gelen güvenli VPN yapılandırmalarına göz atın.",
+  "@marketplaceDescription": {
+    "description": "Premium widget - marketplace description"
+  },
+  "loggedIn": "OTURUM AÇTI",
+  "@loggedIn": {
+    "description": "Premium widget - logged in status"
+  },
+  "loginOrRegister": "OTURUM AÇIN VEYA KAYIT OLUN",
+  "@loginOrRegister": {
+    "description": "Premium widget - login/register prompt"
+  },
+  "loginByCode": "Kodla giriş yapın",
+  "@loginByCode": {
+    "description": "Login by code button text"
+  },
+  "backToLoginByEmail": "E-postayla girişe geri dönün",
+  "@backToLoginByEmail": {
+    "description": "Back to email login button text"
+  },
+  "connectionRequired": "Bağlantı Gerekli",
+  "@connectionRequired": {
+    "description": "Connection required dialog title"
+  },
+  "connectionRequiredDescription": "Güvenli bir giriş veya kayıt işlemini tamamlamak için, öncelikle mevcut bağlantı yöntemlerinden birini kullanarak bir bağlantı kurmalısınız.",
+  "@connectionRequiredDescription": {
+    "description": "Connection required dialog description"
+  }
+}

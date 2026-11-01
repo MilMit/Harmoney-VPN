@@ -1,0 +1,388 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for Russian (`ru`).
+class AppLocalizationsRu extends AppLocalizations {
+  AppLocalizationsRu([String locale = 'ru']) : super(locale);
+
+  @override
+  String get appTitle => 'Harmoney VPN';
+
+  @override
+  String get splashSubtitle =>
+      'Создан для безопасного доступа в интернет,\nразработан для всех, везде';
+
+  @override
+  String get connect => 'Подключить';
+
+  @override
+  String get disconnect => 'Отключить';
+
+  @override
+  String get connected => 'Подключено';
+
+  @override
+  String get disconnected => 'Отключено';
+
+  @override
+  String get connecting => 'Подключение';
+
+  @override
+  String connectingVia(String groupName) {
+    return 'ПОДКЛЮЧЕНИЕ ЧЕРЕЗ $groupName';
+  }
+
+  @override
+  String get switchingMethod => 'ПЕРЕКЛЮЧЕНИЕ МЕТОДА';
+
+  @override
+  String get speedTest => 'Тест скорости';
+
+  @override
+  String get download => 'ЗАГРУЗКА';
+
+  @override
+  String get upload => 'ВЫГРУЗКА';
+
+  @override
+  String get ping => 'ПИНГ';
+
+  @override
+  String get latency => 'ЗАДЕРЖКА';
+
+  @override
+  String get jitter => 'ДЖИТТЕР';
+
+  @override
+  String get packetLoss => 'ПОТЕРЯ ПАКЕТОВ';
+
+  @override
+  String get tapHere => 'НАЖМИТЕ ЗДЕСЬ';
+
+  @override
+  String get settings => 'Настройки';
+
+  @override
+  String get introduction => 'Введение';
+
+  @override
+  String get privacyPolicy => 'Политика конфиденциальности';
+
+  @override
+  String get termsAndConditions => 'Условия использования';
+
+  @override
+  String get ourWebsite => 'Наш веб-сайт';
+
+  @override
+  String get marketplace => 'Магазин';
+
+  @override
+  String get telegramBot => 'Телеграм-бот';
+
+  @override
+  String get sourceCode => 'Исходный код';
+
+  @override
+  String get openSourceLicenses => 'Лицензии с открытым исходным кодом';
+
+  @override
+  String get betaCommunity => 'Бета-сообщество';
+
+  @override
+  String get close => 'Закрыть';
+
+  @override
+  String get copyLogs => 'Копировать логи';
+
+  @override
+  String get logsCopied => 'Логи скопированы в буфер обмена';
+
+  @override
+  String get appLogs => 'Логи приложения';
+
+  @override
+  String get autoRefresh => 'Автообновление';
+
+  @override
+  String get clear => 'Очистить';
+
+  @override
+  String get quickMenu => 'Быстрое меню';
+
+  @override
+  String get noInternet => 'Нет интернета';
+
+  @override
+  String get error => 'Ошибка';
+
+  @override
+  String get loading => 'Загрузка';
+
+  @override
+  String get analyzing => 'Анализ';
+
+  @override
+  String get mbps => 'Мбит/с';
+
+  @override
+  String get ms => 'мс';
+
+  @override
+  String get language => 'Язык';
+
+  @override
+  String get tips => 'СОВЕТЫ';
+
+  @override
+  String get english => 'English (Английский)';
+
+  @override
+  String get chinese => '中文 (Китайский)';
+
+  @override
+  String get gotIt => 'Понятно';
+
+  @override
+  String get learnMore => 'УЗНАТЬ БОЛЬШЕ';
+
+  @override
+  String get harmoneyGoal =>
+      'Цель Harmoney — обеспечить безопасный доступ к общедоступной информации и предоставить бесплатный просмотр.';
+
+  @override
+  String get statusIsChilling => 'отдыхает.';
+
+  @override
+  String get statusIs => 'это';
+
+  @override
+  String get statusFailed => 'не удалось.';
+
+  @override
+  String get statusHas => 'имеет';
+
+  @override
+  String get statusIsReturning => 'возвращается';
+
+  @override
+  String get statusToStandbyMode => 'в режим ожидания.';
+
+  @override
+  String get statusPluggingIn => 'подключение ...';
+
+  @override
+  String get statusPoweredUp => 'включен';
+
+  @override
+  String get statusDoingScience => 'выполняется работа ...';
+
+  @override
+  String get statusExitedMatrix => 'вышел из матрицы';
+
+  @override
+  String get statusSorry => 'нам очень жаль :(';
+
+  @override
+  String get statusConnectAlready => 'Подключиться сейчас';
+
+  @override
+  String get statusTestingSpeed => 'тестирование скорости ...';
+
+  @override
+  String get statusIsReady => 'готов';
+
+  @override
+  String get statusIsInTrouble => 'в беде.';
+
+  @override
+  String get statusDXcoreDown => 'DXcore недоступен.';
+
+  @override
+  String get statusToSpeedTest => 'к тесту скорости';
+
+  @override
+  String get statusYoursToShape => 'создан для вас';
+
+  @override
+  String get settingsConnectionMethod => 'МЕТОД ПОДКЛЮЧЕНИЯ';
+
+  @override
+  String get settingsEscapeMode => 'РЕЖИМ ОБХОДА';
+
+  @override
+  String get settingsDestination => 'НАЗНАЧЕНИЕ';
+
+  @override
+  String get settingsSplitTunnel => 'РАЗДЕЛЬНОЕ ТУННЕЛИРОВАНИЕ';
+
+  @override
+  String get settingsKillSwitch => 'АВАРИЙНОЕ ОТКЛЮЧЕНИЕ';
+
+  @override
+  String get settingsDeepScan => 'ГЛУБОКОЕ СКАНИРОВАНИЕ';
+
+  @override
+  String get settingsHealthCheck => 'ПРОВЕРКА ЗДОРОВЬЯ';
+
+  @override
+  String get settingsIncluded => 'ВКЛЮЧЕНО';
+
+  @override
+  String get settingsAtLeastOneCoreRequired =>
+      'Должен оставаться включенным хотя бы один модуль';
+
+  @override
+  String get settingsResetToDefault => 'Сброс';
+
+  @override
+  String get offlineFlowlineMessage =>
+      'Обновления Flowline приостановлены, так как используется автономная версия.';
+
+  @override
+  String get offlineFlowlineUndo => 'ОТМЕНИТЬ';
+
+  @override
+  String get updateAvailable => 'Доступно обновление';
+
+  @override
+  String get updateRequired => 'Требуется обновление';
+
+  @override
+  String get updateOptionalMessage =>
+      'Чтобы получить максимум от приложения и насладиться последними улучшениями, пожалуйста, обновитесь до новейшей версии.';
+
+  @override
+  String get updateRequiredMessage =>
+      'Для продолжения использования Harmoney, пожалуйста, обновитесь до последней версии. Это обновление включает критические улучшения и необходимо для работы приложения.';
+
+  @override
+  String get updateNow => 'Обновить сейчас';
+
+  @override
+  String get notNow => 'Не сейчас';
+
+  @override
+  String get updateMethods => 'Обновить методы';
+
+  @override
+  String get importConfig => 'Импорт конфигурации';
+
+  @override
+  String get synchronization => 'Синхронизация';
+
+  @override
+  String get settingsDonation => 'Пожертвование';
+
+  @override
+  String get settingsDonationDescription =>
+      'Помогите нам разрушить стены цифровой цензуры и интернет-фильтрации.';
+
+  @override
+  String get authenticationRequired => 'Требуется аутентификация';
+
+  @override
+  String get premiumLoginDescription =>
+      'Для доступа к вашим премиум-подпискам вам необходимо войти в систему или создать учетную запись на веб-сайте Harmoney.';
+
+  @override
+  String get email => 'Электронная почта';
+
+  @override
+  String get emailHint => 'example@domain.com';
+
+  @override
+  String get emailValidation =>
+      'Пожалуйста, введите ваш адрес электронной почты';
+
+  @override
+  String get password => 'Пароль';
+
+  @override
+  String get passwordHint => 'Введите ваш пароль';
+
+  @override
+  String get passwordValidation => 'Пожалуйста, введите ваш пароль';
+
+  @override
+  String get passwordMinLength => 'Пароль должен содержать не менее 6 символов';
+
+  @override
+  String get login => 'Войти';
+
+  @override
+  String get noAccount => 'Нет учетной записи?';
+
+  @override
+  String get signUp => 'Зарегистрироваться';
+
+  @override
+  String get loginFailed =>
+      'Ошибка входа. Проверьте свои учетные данные и попробуйте снова.';
+
+  @override
+  String get loginSuccess => 'Вход выполнен успешно!';
+
+  @override
+  String get code => 'Код';
+
+  @override
+  String get codeHint => 'Введите ваш код доступа';
+
+  @override
+  String get codeValidation => 'Пожалуйста, введите ваш код';
+
+  @override
+  String get premiumLoginByCodeDescription =>
+      'Для доступа к вашим премиум-подпискам введите предоставленный вам код доступа.';
+
+  @override
+  String get havingTrouble => 'Возникли проблемы?';
+
+  @override
+  String get signedInAs =>
+      'Вы в настоящее время вошли в систему с адресом электронной почты';
+
+  @override
+  String get premiumImportDescription =>
+      'Если ваши премиум-подписки не могут быть загружены из-за ограничений интернета и вы не можете подключиться доступными методами, вы можете импортировать файл, полученный из Маркетплейса, в приложение.';
+
+  @override
+  String get planningToExit => 'Планируете выйти?';
+
+  @override
+  String get signOut => 'Выйти';
+
+  @override
+  String get signOutSuccess => 'Выход выполнен успешно!';
+
+  @override
+  String get settingsMarketplace => 'Маркетплейс';
+
+  @override
+  String get marketplaceDescription =>
+      'Просмотрите безопасные конфигурации VPN от проверенных поставщиков.';
+
+  @override
+  String get loggedIn => 'ВОШЛИ В СИСТЕМУ';
+
+  @override
+  String get loginOrRegister => 'ВОЙТИ ИЛИ ЗАРЕГИСТРИРОВАТЬСЯ';
+
+  @override
+  String get loginByCode => 'Войти по коду';
+
+  @override
+  String get backToLoginByEmail => 'Вернуться к входу по электронной почте';
+
+  @override
+  String get connectionRequired => 'Требуется подключение';
+
+  @override
+  String get connectionRequiredDescription =>
+      'Чтобы завершить безопасный процесс входа или регистрации, вы должны сначала установить соединение, используя один из доступных методов подключения.';
+}

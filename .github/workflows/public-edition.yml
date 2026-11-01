@@ -1,0 +1,75 @@
+name: Harmoney Community builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/flutter/**'
+      - 'packages/**'
+      - '.github/workflows/public-edition.yml'
+  pull_request:
+    paths:
+      - 'apps/flutter/**'
+      - 'packages/**'
+      - '.github/workflows/public-edition.yml'
+
+jobs:
+  android:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - working-directory: apps/flutter
+        run: flutter pub get
+      - working-directory: apps/flutter
+        run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harmoney-community-android
+          path: apps/flutter/build/app/outputs/flutter-apk/app-release.apk
+
+  linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Flutter Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev libayatana-appindicator3-dev liblzma-dev libstdc++-12-dev
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - working-directory: apps/flutter
+        run: flutter pub get
+      - working-directory: apps/flutter
+        run: flutter build linux --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harmoney-community-linux
+          path: apps/flutter/build/linux/x64/release/bundle/**
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - working-directory: apps/flutter
+        run: flutter pub get
+      - working-directory: apps/flutter
+        run: flutter build windows --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harmoney-community-windows
+          path: apps/flutter/build/windows/x64/runner/Release/**

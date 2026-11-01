@@ -1,0 +1,488 @@
+{
+  "@@locale": "ar",
+  "appTitle": "Harmoney VPN",
+  "@appTitle": {
+    "description": "The application title"
+  },
+  "splashSubtitle": "مصمم للوصول الآمن إلى الإنترنت،\nللجميع وفي كل مكان",
+  "@splashSubtitle": {
+    "description": "Subtitle shown on splash screen"
+  },
+  "connect": "اتصال",
+  "@connect": {
+    "description": "Connect button text"
+  },
+  "disconnect": "قطع الاتصال",
+  "@disconnect": {
+    "description": "Disconnect button text"
+  },
+  "connected": "متصل",
+  "@connected": {
+    "description": "Connected status text"
+  },
+  "disconnected": "غير متصل",
+  "@disconnected": {
+    "description": "Disconnected status text"
+  },
+  "connecting": "جارٍ الاتصال",
+  "@connecting": {
+    "description": "Connecting status text"
+  },
+  "connectingVia": "جارٍ الاتصال عبر {groupName}",
+  "@connectingVia": {
+    "description": "Connecting status with group name",
+    "placeholders": {
+      "groupName": {
+        "type": "String"
+      }
+    }
+  },
+  "switchingMethod": "جارٍ تبديل المسار",
+  "@switchingMethod": {
+    "description": "Status shown when switching connection method"
+  },
+  "speedTest": "اختبار السرعة",
+  "@speedTest": {
+    "description": "Speed test feature label"
+  },
+  "download": "تنزيل",
+  "@download": {
+    "description": "Download speed label"
+  },
+  "upload": "رفع",
+  "@upload": {
+    "description": "Upload speed label"
+  },
+  "ping": "استجابة",
+  "@ping": {
+    "description": "Ping label"
+  },
+  "latency": "التأخير",
+  "@latency": {
+    "description": "Latency label"
+  },
+  "jitter": "تذبذب",
+  "@jitter": {
+    "description": "Jitter label"
+  },
+  "packetLoss": "فقدان الحزم",
+  "@packetLoss": {
+    "description": "Packet loss label"
+  },
+  "tapHere": "اضغط هنا",
+  "@tapHere": {
+    "description": "Instruction to tap to start speed test"
+  },
+  "settings": "الإعدادات",
+  "@settings": {
+    "description": "Settings menu label"
+  },
+  "introduction": "المقدمة",
+  "@introduction": {
+    "description": "Introduction menu item"
+  },
+  "privacyPolicy": "سياسة الخصوصية",
+  "@privacyPolicy": {
+    "description": "Privacy policy menu item"
+  },
+  "termsAndConditions": "الشروط والأحكام",
+  "@termsAndConditions": {
+    "description": "Terms and conditions menu item"
+  },
+  "ourWebsite": "موقعنا الإلكتروني",
+  "@ourWebsite": {
+    "description": "Our website menu item"
+  },
+  "marketplace": "المتجر",
+  "@marketplace": {
+    "description": "Marketplace menu item"
+  },
+  "telegramBot": "بوت تيليجرام",
+  "@telegramBot": {
+    "description": "Telegram bot menu item"
+  },
+  "sourceCode": "المصدر البرمجي",
+  "@sourceCode": {
+    "description": "Source code link"
+  },
+  "openSourceLicenses": "تراخيص مفتوحة المصدر",
+  "@openSourceLicenses": {
+    "description": "Open source licenses link"
+  },
+  "betaCommunity": "مجتمع الإصدار التجريبي",
+  "@betaCommunity": {
+    "description": "Beta community link"
+  },
+  "close": "إغلاق",
+  "@close": {
+    "description": "Close button text"
+  },
+  "copyLogs": "نسخ السجلات",
+  "@copyLogs": {
+    "description": "Copy logs button text"
+  },
+  "logsCopied": "تم نسخ السجلات إلى الحافظة",
+  "@logsCopied": {
+    "description": "Message shown when logs are copied"
+  },
+  "appLogs": "سجلات التطبيق",
+  "@appLogs": {
+    "description": "App logs panel title"
+  },
+  "autoRefresh": "تحديث تلقائي",
+  "@autoRefresh": {
+    "description": "Auto-refresh toggle label"
+  },
+  "clear": "مسح",
+  "@clear": {
+    "description": "Clear logs button text"
+  },
+  "quickMenu": "القائمة السريعة",
+  "@quickMenu": {
+    "description": "Quick menu label"
+  },
+  "noInternet": "لا يوجد اتصال بالإنترنت",
+  "@noInternet": {
+    "description": "No internet connection status"
+  },
+  "error": "خطأ",
+  "@error": {
+    "description": "Error status"
+  },
+  "loading": "جارٍ التحميل",
+  "@loading": {
+    "description": "Loading status"
+  },
+  "analyzing": "جارٍ التحليل",
+  "@analyzing": {
+    "description": "Analyzing status"
+  },
+  "mbps": "Mbps",
+  "@mbps": {
+    "description": "Megabits per second unit"
+  },
+  "ms": "مللي ثانية",
+  "@ms": {
+    "description": "Milliseconds unit"
+  },
+  "language": "اللغة",
+  "@language": {
+    "description": "Language setting label"
+  },
+  "tips": "نصائح",
+  "@tips": {
+    "description": "Tips section header"
+  },
+  "english": "الإنجليزية",
+  "@english": {
+    "description": "English language name"
+  },
+  "chinese": "中文 (الصينية)",
+  "@chinese": {
+    "description": "Chinese language name"
+  },
+  "gotIt": "فهمت",
+  "@gotIt": {
+    "description": "Got it button text"
+  },
+  "learnMore": "تعرف على المزيد",
+  "@learnMore": {
+    "description": "Learn more section title"
+  },
+  "harmoneyGoal": "الهدف من Harmoney هو ضمان الوصول الآمن إلى المعلومات العامة وتوفير تجربة تصفح مجانية.",
+  "@harmoneyGoal": {
+    "description": "Description of Harmoney goal"
+  },
+  "statusIsChilling": "تقشعر له الأبدان.",
+  "@statusIsChilling": {
+    "description": "Status message - chilling state"
+  },
+  "statusIs": "هو فشل",
+  "@statusIs": {
+    "description": "Status connector word"
+  },
+  "statusFailed": ".",
+  "@statusFailed": {
+    "description": "Status message - failed state"
+  },
+  "statusHas": "قام",
+  "@statusHas": {
+    "description": "Status connector word"
+  },
+  "statusIsReturning": "بإرجاع",
+  "@statusIsReturning": {
+    "description": "Status message - returning state"
+  },
+  "statusToStandbyMode": "إلى وضع الاستعداد. توصيل",
+  "@statusToStandbyMode": {
+    "description": "Status message - standby mode text"
+  },
+  "statusPluggingIn": "... تشغيل",
+  "@statusPluggingIn": {
+    "description": "Status message - plugging in state"
+  },
+  "statusPoweredUp": "",
+  "@statusPoweredUp": {
+    "description": "Status message - powered up state"
+  },
+  "statusDoingScience": "القيام بالعلم ... خرج",
+  "@statusDoingScience": {
+    "description": "Status message - working state"
+  },
+  "statusExitedMatrix": "من المصفوفة",
+  "@statusExitedMatrix": {
+    "description": "Status message - disconnected state"
+  },
+  "statusSorry": "نحن آسفون :(",
+  "@statusSorry": {
+    "description": "Status message - apology"
+  },
+  "statusConnectAlready": "اتصل بالفعل بسرعة اختبار",
+  "@statusConnectAlready": {
+    "description": "Status message - connect prompt"
+  },
+  "statusTestingSpeed": "...",
+  "@statusTestingSpeed": {
+    "description": "Status message - speed test in progress"
+  },
+  "statusIsReady": "جاهز",
+  "@statusIsReady": {
+    "description": "Status message - ready state"
+  },
+  "statusIsInTrouble": "في ورطة.",
+  "@statusIsInTrouble": {
+    "description": "Status connector word when DXcore handshake fails"
+  },
+  "statusDXcoreDown": "DXcore للأسفل.",
+  "@statusDXcoreDown": {
+    "description": "Status message shown when DXcore cannot be verified"
+  },
+  "statusToSpeedTest": "لاختبار السرعة",
+  "@statusToSpeedTest": {
+    "description": "Status message - ready for speed test"
+  },
+  "statusYoursToShape": "لك الشكل",
+  "@statusYoursToShape": {
+    "description": "Settings status message"
+  },
+  "settingsConnectionMethod": "طريقة الاتصال",
+  "@settingsConnectionMethod": {
+    "description": "Settings section - connection method"
+  },
+  "settingsEscapeMode": "وضع الهروب",
+  "@settingsEscapeMode": {
+    "description": "Settings section - escape mode"
+  },
+  "settingsDestination": "الوجهة",
+  "@settingsDestination": {
+    "description": "Settings section - destination"
+  },
+  "settingsSplitTunnel": "تقسيم النفق",
+  "@settingsSplitTunnel": {
+    "description": "Settings section - split tunnel"
+  },
+  "settingsKillSwitch": "مفتاح الإيقاف الطارئ",
+  "@settingsKillSwitch": {
+    "description": "Settings section - kill switch"
+  },
+  "settingsDeepScan": "فحص عميق",
+  "@settingsDeepScan": {
+    "description": "Settings section - deep scan"
+  },
+  "settingsHealthCheck": "فحص الصحة",
+  "@settingsHealthCheck": {
+    "description": "Settings section - health check"
+  },
+  "settingsIncluded": "متضمن",
+  "@settingsIncluded": {
+    "description": "Settings label - included items"
+  },
+  "settingsAtLeastOneCoreRequired": "يجب أن يظل نواة واحدة على الأقل ممكنة",
+  "@settingsAtLeastOneCoreRequired": {
+    "description": "Settings error message - core requirement"
+  },
+  "settingsResetToDefault": "إعادة تعيين",
+  "@settingsResetToDefault": {
+    "description": "Settings button - reset to default"
+  },
+  "offlineFlowlineMessage": "تم إيقاف تحديثات Flowline مؤقتًا نظرًا لاستخدام الإصدار غير المتصل حاليًا.",
+  "@offlineFlowlineMessage": {
+    "description": "Offline flowline notification message"
+  },
+  "offlineFlowlineUndo": "التراجع عن",
+  "@offlineFlowlineUndo": {
+    "description": "Offline flowline undo button"
+  },
+  "updateAvailable": "التحديث متاح",
+  "@updateAvailable": {
+    "description": "Update dialog title - optional update"
+  },
+  "updateRequired": "التحديث مطلوب",
+  "@updateRequired": {
+    "description": "Update dialog title - mandatory update"
+  },
+  "updateOptionalMessage": "للحصول على أقصى استفادة من التطبيق والاستمتاع بأحدث التحسينات، يرجى التحديث إلى الإصدار الأحدث.",
+  "@updateOptionalMessage": {
+    "description": "Update dialog message - optional update"
+  },
+  "updateRequiredMessage": "لمواصلة استخدام Harmoney، يرجى التحديث إلى الإصدار الأحدث. يتضمن هذا التحديث تحسينات مهمة وهو مطلوب لوظائف التطبيق.",
+  "@updateRequiredMessage": {
+    "description": "Update dialog message - mandatory update"
+  },
+  "updateNow": "التحديث الآن",
+  "@updateNow": {
+    "description": "Update dialog button - update action"
+  },
+  "notNow": "ليس الآن",
+  "@notNow": {
+    "description": "Update dialog button - dismiss action"
+  },
+  "updateMethods": "طرق التحديث",
+  "@updateMethods": {
+    "description": "Sync menu - update methods option"
+  },
+  "importConfig": "تكوين الاستيراد",
+  "@importConfig": {
+    "description": "Sync menu - import configuration file option"
+  },
+  "synchronization": "المزامنة",
+  "@synchronization": {
+    "description": "Sync menu label"
+  },
+  "settingsDonation": "التبرع",
+  "@settingsDonation": {
+    "description": "Donation widget title"
+  },
+  "settingsDonationDescription": "ساعدنا في كسر جدران الرقابة الرقمية وتصفية الإنترنت. يلزم مصادقة",
+  "@settingsDonationDescription": {
+    "description": "Donation widget description text"
+  },
+  "authenticationRequired": "",
+  "@authenticationRequired": {
+    "description": "Premium login dialog title"
+  },
+  "premiumLoginDescription": "للوصول إلى اشتراكك (اشتراكاتك) المميز، تحتاج إلى تسجيل الدخول أو إنشاء حساب من خلال موقع Harmoney.",
+  "@premiumLoginDescription": {
+    "description": "Premium login dialog description"
+  },
+  "email": "البريد الإلكتروني",
+  "@email": {
+    "description": "Email field label"
+  },
+  "emailHint": "example@domain.com",
+  "@emailHint": {
+    "description": "Email field hint text"
+  },
+  "emailValidation": "يرجى إدخال بريدك الإلكتروني",
+  "@emailValidation": {
+    "description": "Email validation error message"
+  },
+  "password": "كلمة المرور",
+  "@password": {
+    "description": "Password field label"
+  },
+  "passwordHint": "أدخل كلمة المرور الخاصة بك",
+  "@passwordHint": {
+    "description": "Password field hint text"
+  },
+  "passwordValidation": "الرجاء إدخال كلمة المرور الخاصة بك",
+  "@passwordValidation": {
+    "description": "Password validation error message"
+  },
+  "passwordMinLength": "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل",
+  "@passwordMinLength": {
+    "description": "Password minimum length validation error"
+  },
+  "login": "تسجيل الدخول",
+  "@login": {
+    "description": "Login button text"
+  },
+  "noAccount": "ليس لديك حساب؟",
+  "@noAccount": {
+    "description": "Sign up prompt text"
+  },
+  "signUp": "قم بالتسجيل",
+  "@signUp": {
+    "description": "Sign up link text"
+  },
+  "loginFailed": "فشل تسجيل الدخول. يرجى التحقق من بيانات الاعتماد الخاصة بك وحاول مرة أخرى.",
+  "@loginFailed": {
+    "description": "Login failed toast message"
+  },
+  "loginSuccess": "تم تسجيل الدخول بنجاح! رمز",
+  "@loginSuccess": {
+    "description": "Login success toast message"
+  },
+  "code": "",
+  "@code": {
+    "description": "Code field label"
+  },
+  "codeHint": "أدخل رمز الوصول الخاص بك",
+  "@codeHint": {
+    "description": "Code field hint text"
+  },
+  "codeValidation": "يرجى إدخال الرمز الخاص بك",
+  "@codeValidation": {
+    "description": "Code validation error message"
+  },
+  "premiumLoginByCodeDescription": "للوصول إلى اشتراكك (اشتراكاتك) المميز، أدخل رمز الوصول المقدم لك.",
+  "@premiumLoginByCodeDescription": {
+    "description": "Premium login by code dialog description"
+  },
+  "havingTrouble": "هل تواجه مشكلة؟",
+  "@havingTrouble": {
+    "description": "Premium trouble dialog title"
+  },
+  "signedInAs": "لقد قمت حاليًا بتسجيل الدخول باستخدام عنوان البريد الإلكتروني",
+  "@signedInAs": {
+    "description": "Premium trouble dialog - signed in message prefix"
+  },
+  "premiumImportDescription": "إذا تعذر تحميل اشتراكاتك المميزة بسبب قيود الإنترنت ولم تتمكن من الاتصال باستخدام الطرق المتاحة، فيمكنك استيراد الملف الذي تم الحصول عليه من Marketplace إلى التطبيق.",
+  "@premiumImportDescription": {
+    "description": "Premium trouble dialog - import instructions"
+  },
+  "planningToExit": "هل تخطط للخروج؟",
+  "@planningToExit": {
+    "description": "Premium trouble dialog - sign out prompt"
+  },
+  "signOut": "تسجيل الخروج",
+  "@signOut": {
+    "description": "Sign out link text"
+  },
+  "signOutSuccess": "تم تسجيل الخروج بنجاح!",
+  "@signOutSuccess": {
+    "description": "Sign out success toast message"
+  },
+  "settingsMarketplace": "Marketplace",
+  "@settingsMarketplace": {
+    "description": "Premium widget - marketplace title"
+  },
+  "marketplaceDescription": "تصفح تكوينات VPN الآمنة من الموردين الموثوقين. تم تسجيل الدخول إلى",
+  "@marketplaceDescription": {
+    "description": "Premium widget - marketplace description"
+  },
+  "loggedIn": "",
+  "@loggedIn": {
+    "description": "Premium widget - logged in status"
+  },
+  "loginOrRegister": "تسجيل الدخول أو التسجيل",
+  "@loginOrRegister": {
+    "description": "Premium widget - login/register prompt"
+  },
+  "loginByCode": "تسجيل الدخول بالرمز",
+  "@loginByCode": {
+    "description": "Login by code button text"
+  },
+  "backToLoginByEmail": "العودة إلى تسجيل الدخول عبر البريد الإلكتروني",
+  "@backToLoginByEmail": {
+    "description": "Back to email login button text"
+  },
+  "connectionRequired": "مطلوب اتصال",
+  "@connectionRequired": {
+    "description": "Connection required dialog title"
+  },
+  "connectionRequiredDescription": "لإكمال عملية تسجيل دخول أو تسجيل آمنة، يجب عليك أولاً إنشاء اتصال باستخدام إحدى طرق الاتصال المتاحة.",
+  "@connectionRequiredDescription": {
+    "description": "Connection required dialog description"
+  }
+}
