@@ -1,0 +1,65 @@
+name: Publish Harmoney release assets
+
+on:
+  workflow_run:
+    workflows: [Harmoney Community builds]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Android split APKs
+        uses: actions/download-artifact@v4
+        with:
+          name: harmoney-community-android-splits
+          path: release-assets/android-splits
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Download Linux installers
+        uses: actions/download-artifact@v4
+        with:
+          name: harmoney-community-linux-installers
+          path: release-assets/linux-installers
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Download Windows executable
+        uses: actions/download-artifact@v4
+        with:
+          name: harmoney-community-windows-exe
+          path: release-assets/windows
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Check release files
+        run: |
+          test -f release-assets/android-splits/app-armeabi-v7a-release.apk
+          test -f release-assets/android-splits/app-arm64-v8a-release.apk
+          test -f release-assets/android-splits/app-x86_64-release.apk
+          test -f release-assets/linux-installers/HarmoneyVPN-0.1.0-amd64.deb
+          test -f release-assets/linux-installers/HarmoneyVPN-0.1.0-x86_64.AppImage
+          test -f release-assets/windows/harmoney_community.exe
+
+      - name: Attach files to v0.1.0 release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: v0.1.0
+          overwrite_files: true
+          fail_on_unmatched_files: true
+          files: |
+            release-assets/android-splits/*.apk
+            release-assets/linux-installers/*.deb
+            release-assets/linux-installers/*.AppImage
+            release-assets/windows/harmoney_community.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
