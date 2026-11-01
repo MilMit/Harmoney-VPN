@@ -1,21 +1,30 @@
-﻿# Harmoney Community
+# Harmoney VPN — Community Edition
 
-Public Flutter app for Android, Linux and Windows. The provider picker includes
-Harmoney Smart and Firefox VPN. Harmoney Pro is a separate download and its
-protocol implementation is not included in this source edition.
+The Flutter application for the Harmoney community client on Android, Windows, and Linux. The app includes Harmoney Smart and FireTunnel; Harmoney Pro is distributed separately.
 
-## Run
-
-From this directory:
+## Run locally
 
 ```sh
 flutter pub get
 flutter run
 ```
 
-Build for Android, Linux or Windows with the matching Flutter desktop toolchain.
-Set the Harmoney Pro download page at build time when it is published:
+## Release builds
+
+Build on a host with the matching platform toolchain:
 
 ```sh
-flutter build apk --dart-define=HARMONEY_PRO_DOWNLOAD_URL=https://example.com/releases
+flutter build apk --release       # Android
+flutter build windows --release   # Windows
+flutter build linux --release     # Linux
 ```
+
+Linux requires GTK 3 and Ayatana AppIndicator development packages. The root README contains the full dependency command and feature overview.
+
+## Configure the Pro download link
+
+```sh
+flutter build apk --dart-define=HARMONEY_PRO_DOWNLOAD_URL=https://github.com/OWNER/REPOSITORY/releases/latest
+```
+
+Without this define, the app displays an unavailable-link message in the Pro download card.
