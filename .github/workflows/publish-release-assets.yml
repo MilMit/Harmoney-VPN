@@ -137,7 +137,6 @@ jobs:
           if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" \
               --repo "$GITHUB_REPOSITORY" \
-              --target "$SOURCE_SHA" \
               --title "Harmoney VPN $VERSION" \
               --notes "Harmoney VPN Community release $VERSION. Includes Android APKs, Windows, and Linux installers." \
               --draft
