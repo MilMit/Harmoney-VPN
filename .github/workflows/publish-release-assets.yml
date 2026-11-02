@@ -105,6 +105,14 @@ jobs:
           github-token: ${{ secrets.RELEASES_TOKEN || github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.metadata.outputs.run_id }}
+      - name: Download Windows installer
+        uses: actions/download-artifact@v4
+        with:
+          name: harmoney-community-windows-installer
+          path: release-assets/windows-installer
+          github-token: ${{ secrets.RELEASES_TOKEN || github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.metadata.outputs.run_id }}
       - name: Prepare release files
         shell: bash
         env:
@@ -119,6 +127,8 @@ jobs:
           cp "release-assets/linux-installers/HarmoneyVPN-${VERSION}-x86_64.AppImage" release-assets/
           test -s release-assets/windows-bundle/connectivity_plus_plugin.dll
           test -s release-assets/windows-bundle/flutter_secure_storage_windows_plugin.dll
+          installer=(release-assets/windows-installer/*.exe)
+          test -s "${installer[0]}"
           (cd release-assets/linux-bundle && zip -qr ../harmoney-community-linux.zip .)
           (cd release-assets/windows-bundle && zip -qr ../harmoney-community-windows.zip .)
           test -s release-assets/harmoney-community-android.apk
@@ -154,6 +164,7 @@ jobs:
             release-assets/HarmoneyVPN-*.AppImage \
             release-assets/harmoney-community-linux.zip \
             release-assets/harmoney-community-windows.zip \
+            release-assets/windows-installer/*.exe \
             --repo "$GITHUB_REPOSITORY" \
             --clobber
       - name: Remove obsolete standalone Windows executable
@@ -170,4 +181,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
           RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
-        run: gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+        run: |
+          set -euo pipefail
+          is_draft="$(gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)"
+          if [[ "$is_draft" == "true" ]]; then
+            gh release edit "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
+          fi

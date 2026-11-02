@@ -89,7 +89,21 @@ jobs:
         run: flutter pub get
       - working-directory: apps/flutter
         run: flutter build windows --release
+      - name: Install Inno Setup
+        run: choco install innosetup --yes --no-progress
+      - name: Build Windows installer
+        working-directory: apps/flutter
+        shell: pwsh
+        run: |
+          $version = (Get-Content pubspec.yaml | Select-String '^version: ').ToString().Split(':')[1].Trim().Split('+')[0]
+          $iscc = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          & $iscc "/DMyAppVersion=$version" windows/installer/HarmoneyCommunity.iss
       - uses: actions/upload-artifact@v4
         with:
           name: harmoney-community-windows
           path: apps/flutter/build/windows/x64/runner/Release/**
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harmoney-community-windows-installer
+          if-no-files-found: error
+          path: apps/flutter/build/windows/x64/runner/HarmoneyVPN-*-windows-x64-setup.exe
