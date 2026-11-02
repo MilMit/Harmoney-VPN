@@ -93,7 +93,3 @@ jobs:
         with:
           name: harmoney-community-windows
           path: apps/flutter/build/windows/x64/runner/Release/**
-      - uses: actions/upload-artifact@v4
-        with:
-          name: harmoney-community-windows-exe
-          path: apps/flutter/build/windows/x64/runner/Release/harmoney_community.exe

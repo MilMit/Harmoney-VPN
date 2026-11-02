@@ -105,14 +105,6 @@ jobs:
           github-token: ${{ secrets.RELEASES_TOKEN || github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ steps.metadata.outputs.run_id }}
-      - name: Download Windows executable
-        uses: actions/download-artifact@v4
-        with:
-          name: harmoney-community-windows-exe
-          path: release-assets/windows-exe
-          github-token: ${{ secrets.RELEASES_TOKEN || github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ steps.metadata.outputs.run_id }}
       - name: Prepare release files
         shell: bash
         env:
@@ -125,12 +117,15 @@ jobs:
           cp release-assets/android-splits/app-x86_64-release.apk "release-assets/HarmoneyVPN-${VERSION}-android-x86_64.apk"
           cp "release-assets/linux-installers/HarmoneyVPN-${VERSION}-amd64.deb" release-assets/
           cp "release-assets/linux-installers/HarmoneyVPN-${VERSION}-x86_64.AppImage" release-assets/
-          cp release-assets/windows-exe/harmoney_community.exe release-assets/
+          test -s release-assets/windows-bundle/connectivity_plus_plugin.dll
+          test -s release-assets/windows-bundle/flutter_secure_storage_windows_plugin.dll
           (cd release-assets/linux-bundle && zip -qr ../harmoney-community-linux.zip .)
           (cd release-assets/windows-bundle && zip -qr ../harmoney-community-windows.zip .)
           test -s release-assets/harmoney-community-android.apk
           test -s release-assets/harmoney-community-windows.zip
           test -s release-assets/harmoney-community-linux.zip
+          unzip -l release-assets/harmoney-community-windows.zip | grep -q 'connectivity_plus_plugin.dll'
+          unzip -l release-assets/harmoney-community-windows.zip | grep -q 'flutter_secure_storage_windows_plugin.dll'
       - name: Create draft release when needed
         env:
           GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
@@ -160,9 +155,18 @@ jobs:
             release-assets/HarmoneyVPN-*.AppImage \
             release-assets/harmoney-community-linux.zip \
             release-assets/harmoney-community-windows.zip \
-            release-assets/harmoney_community.exe \
             --repo "$GITHUB_REPOSITORY" \
             --clobber
+      - name: Remove obsolete standalone Windows executable
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          set -euo pipefail
+          for tag in "$RELEASE_TAG" v0.1.0; do
+            gh release delete-asset "$tag" harmoney_community.exe \
+              --repo "$GITHUB_REPOSITORY" --yes || true
+          done
       - name: Publish release
         env:
           GH_TOKEN: ${{ secrets.RELEASES_TOKEN || github.token }}
