@@ -21,10 +21,10 @@ flutter build linux --release     # Linux
 
 Linux requires GTK 3 and Ayatana AppIndicator development packages. The root README contains the full dependency command and feature overview.
 
-## Configure the Pro download link
+## Harmoney Pro download page
 
 ```sh
-flutter build apk --dart-define=HARMONEY_PRO_DOWNLOAD_URL=https://github.com/OWNER/REPOSITORY/releases/latest
+flutter build apk --dart-define=HARMONEY_PRO_DOWNLOAD_URL=https://harmoney-pro-download.candidberry8.chatgpt.site
 ```
 
-Without this define, the app displays an unavailable-link message in the Pro download card.
+The public edition opens the platform-aware download page by default. Use the define above to override it for a custom distribution.

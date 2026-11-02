@@ -1,10 +1,10 @@
 /// Build constants for the public source edition.
 ///
-/// Configure the release page at build time once it is published.
+/// The public platform-aware Harmoney Pro download page.
 abstract final class GithubEdition {
   static const harmoneyProDownloadUrl = String.fromEnvironment(
     'HARMONEY_PRO_DOWNLOAD_URL',
-    defaultValue: '',
+    defaultValue: 'https://harmoney-pro-download.candidberry8.chatgpt.site',
   );
 
   static bool get hasHarmoneyProDownload =>
