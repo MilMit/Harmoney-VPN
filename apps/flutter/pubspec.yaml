@@ -1,7 +1,7 @@
 name: milmit_vpn_client
 description: Public Harmoney VPN client for Android, Windows, and Linux with Harmoney Smart and FireTunnel.
 publish_to: none
-version: 0.1.0+4036
+version: 0.1.1+4037
 
 environment:
   sdk: '>=3.4.0 <4.0.0'

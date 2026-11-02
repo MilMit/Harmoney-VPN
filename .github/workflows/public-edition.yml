@@ -63,7 +63,9 @@ jobs:
         run: flutter build linux --release
       - name: Package Linux installers
         working-directory: apps/flutter
-        run: bash linux/packaging/build-packages.sh build/linux/x64/release/bundle 0.1.0 build/linux/x64/release/installers
+        run: |
+          version="$(sed -n 's/^version: \([^+]*\).*/\1/p' pubspec.yaml)"
+          bash linux/packaging/build-packages.sh build/linux/x64/release/bundle "$version" build/linux/x64/release/installers
       - uses: actions/upload-artifact@v4
         with:
           name: harmoney-community-linux
