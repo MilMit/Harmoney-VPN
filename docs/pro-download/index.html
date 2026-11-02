@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#10151d">
+  <meta name="description" content="دانلود Harmoney Pro برای Android، Windows و Linux">
+  <title>دانلود Harmoney Pro</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #10151d;
+      --surface: #171f2a;
+      --surface-raised: #1c2733;
+      --line: #293543;
+      --text: #f5f7fa;
+      --muted: #a5b1bf;
+      --mint: #31dfb4;
+      --violet: #a98cff;
+      --warning: #e9c878;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(ellipse at 18% 2%, #263b3b 0, transparent 34rem),
+        radial-gradient(ellipse at 88% 30%, #292244 0, transparent 32rem),
+        var(--bg);
+      font-family: Inter, "Segoe UI", Tahoma, sans-serif;
+      line-height: 1.65;
+    }
+    button, a, select { font: inherit; }
+    .shell { width: min(1060px, calc(100% - 36px)); margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 28px 0; }
+    .brand { display: flex; gap: 11px; align-items: center; font-weight: 750; letter-spacing: .01em; }
+    .brand-mark { display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid #31dfb47a; border-radius: 13px; color: var(--mint); background: #31dfb414; }
+    .brand-mark svg { width: 22px; height: 22px; }
+    .language { max-width: 150px; border: 1px solid var(--line); border-radius: 999px; padding: 7px 13px; color: var(--text); background: #111821a8; cursor: pointer; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .hero { position: relative; overflow: hidden; padding: clamp(28px, 6vw, 66px) 0 42px; }
+    .eyebrow { display: inline-flex; gap: 8px; align-items: center; border: 1px solid #31dfb442; border-radius: 999px; padding: 5px 12px; color: var(--mint); background: #31dfb410; font-size: .83rem; }
+    .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--mint); box-shadow: 0 0 14px var(--mint); }
+    h1 { max-width: 720px; margin: 19px 0 13px; font-size: clamp(2.1rem, 5vw, 4.2rem); line-height: 1.18; letter-spacing: -.045em; }
+    .gradient { color: var(--mint); }
+    .intro { max-width: 650px; margin: 0; color: var(--muted); font-size: clamp(1rem, 1.7vw, 1.12rem); }
+    .detected { display: flex; align-items: center; gap: 10px; margin-top: 25px; padding: 12px 15px; width: fit-content; max-width: 100%; border: 1px solid var(--line); border-radius: 13px; color: #dce4ec; background: #171f2ab8; font-size: .94rem; }
+    .detected svg { flex: 0 0 auto; width: 20px; height: 20px; color: var(--violet); }
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin: 24px 0 16px; }
+    h2 { margin: 0; font-size: 1.35rem; }
+    .section-head p { margin: 0; color: var(--muted); font-size: .9rem; }
+    .platforms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+    .card { position: relative; display: flex; flex-direction: column; min-height: 228px; padding: 21px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(145deg, #1a2430, #141b25); transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+    .card.recommended { border-color: #31dfb49e; box-shadow: 0 0 0 1px #31dfb422, 0 18px 60px #31dfb40b; }
+    .card:hover { transform: translateY(-2px); }
+    .card-top { display: flex; justify-content: space-between; align-items: start; }
+    .platform-icon { display: grid; place-items: center; width: 45px; height: 45px; border-radius: 14px; color: var(--mint); background: #31dfb414; }
+    .platform-icon svg { width: 25px; height: 25px; }
+    .recommended-tag { display: none; border-radius: 999px; padding: 4px 9px; color: #b8ffe9; background: #31dfb41b; font-size: .74rem; }
+    .recommended .recommended-tag { display: inline-flex; }
+    h3 { margin: 17px 0 3px; font-size: 1.12rem; }
+    .card p { margin: 0 0 18px; color: var(--muted); font-size: .87rem; }
+    .download { display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: auto; width: 100%; min-height: 43px; border: 1px solid #31dfb457; border-radius: 11px; color: #081b17; background: var(--mint); text-decoration: none; font-weight: 750; transition: filter .15s ease; }
+    .download:hover { filter: brightness(1.08); }
+    .download[aria-disabled="true"] { border-color: #3a4653; color: #b0bac5; background: #28323e; cursor: default; }
+    .download svg { width: 17px; height: 17px; }
+    .notice { display: flex; gap: 12px; align-items: start; margin: 22px 0 0; padding: 15px 17px; border: 1px solid #e9c87845; border-radius: 14px; color: #e3d7b1; background: #e9c8780b; font-size: .9rem; }
+    .notice svg { flex: 0 0 auto; width: 19px; height: 19px; margin-top: 2px; color: var(--warning); }
+    .notice p { margin: 0; }
+    footer { display: flex; justify-content: space-between; gap: 20px; margin-top: 50px; padding: 20px 0 30px; border-top: 1px solid var(--line); color: var(--muted); font-size: .84rem; }
+    footer a { color: #a9e8d5; text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+    [hidden] { display: none !important; }
+    @media (max-width: 720px) {
+      .platforms { grid-template-columns: 1fr; }
+      .card { min-height: 190px; }
+      .section-head { align-items: start; flex-direction: column; gap: 4px; }
+    }
+    @media (max-width: 460px) {
+      .shell { width: min(100% - 26px, 1060px); }
+      header { padding: 20px 0; }
+      .hero { padding-top: 35px; }
+      footer { flex-direction: column; gap: 4px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.2h4.2l2.1-5.1 3.4 9.8 2.2-4.7H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.2" opacity=".55"/></svg>
+        </span>
+        <span>Harmoney <span class="gradient">Pro</span></span>
+      </div>
+      <label class="sr-only" for="language">Language</label>
+      <select class="language" id="language" aria-label="Language">
+        <option value="fa">فارسی</option><option value="en">English</option><option value="ar">العربية</option>
+        <option value="de">Deutsch</option><option value="es">Español</option><option value="fr">Français</option>
+        <option value="it">Italiano</option><option value="ru">Русский</option><option value="tr">Türkçe</option><option value="zh">中文</option>
+      </select>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="title">
+        <div class="eyebrow"><span class="dot"></span><span data-i18n="eyebrow">دانلود رسمی</span></div>
+        <h1 id="title" data-i18n="title">Harmoney Pro برای <span class="gradient">دستگاه شما</span></h1>
+        <p class="intro" data-i18n="intro">سیستم‌عامل دستگاه شناسایی می‌شود تا نسخهٔ مناسب را راحت‌تر پیدا کنید. اگر خواستید، می‌توانید پلتفرم دیگری را هم انتخاب کنید.</p>
+        <div class="detected" id="detected" role="status" aria-live="polite">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="3" stroke="currentColor" stroke-width="1.7"/><path d="M9 17h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <span id="detected-label"></span>
+        </div>
+      </section>
+
+      <section aria-labelledby="platform-title">
+        <div class="section-head">
+          <h2 id="platform-title" data-i18n="choose">پلتفرم خود را انتخاب کنید</h2>
+          <p data-i18n="available">Android، Windows و Linux</p>
+        </div>
+        <div class="platforms">
+          <article class="card" data-platform="android">
+            <div class="card-top"><span class="platform-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M7 9h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-1v2h-2v-2h-4v2H8v-2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2ZM7 7l-2-3m12 3 2-3M9 5l1 2h4l1-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 12v2m8-2v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span><span class="recommended-tag" data-i18n="recommended">پیشنهادی برای شما</span></div>
+            <h3>Android</h3><p data-i18n="androidDesc">گوشی‌ها و تبلت‌های Android</p>
+            <a class="download" data-download="android" href="#" aria-disabled="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="soon">دانلود به‌زودی</span></a>
+          </article>
+          <article class="card" data-platform="windows">
+            <div class="card-top"><span class="platform-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 5.2 10.7 4v7H3V5.2Zm8.8-1.4L21 2.5V11h-9.2V3.8ZM3 12.8h7.7v7L3 18.6v-5.8Zm8.8 0H21v8.7l-9.2-1.3v-7.4Z"/></svg></span><span class="recommended-tag" data-i18n="recommended">پیشنهادی برای شما</span></div>
+            <h3>Windows</h3><p data-i18n="windowsDesc">رایانه‌های Windows 10 و 11</p>
+            <a class="download" data-download="windows" href="#" aria-disabled="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="soon">دانلود به‌زودی</span></a>
+          </article>
+          <article class="card" data-platform="linux">
+            <div class="card-top"><span class="platform-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3c-2.3 0-3.6 1.9-3.6 4.4v2.1c0 1.6-1.4 2.4-2.5 3.8-.8 1.1-.7 2.8.4 3.6.7.5 1.5.4 2.3.1l.9 3h5l.9-3c.8.3 1.6.4 2.3-.1 1.1-.8 1.2-2.5.4-3.6-1.1-1.4-2.5-2.2-2.5-3.8V7.4C15.6 4.9 14.3 3 12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M10 8h.1m3.8 0h.1m-4.4 5.1c.7.7 1.4 1 2.4 1s1.7-.3 2.4-1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><span class="recommended-tag" data-i18n="recommended">پیشنهادی برای شما</span></div>
+            <h3>Linux</h3><p data-i18n="linuxDesc">Ubuntu، Debian و توزیع‌های دیگر</p>
+            <a class="download" data-download="linux" href="#" aria-disabled="true"><svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="soon">دانلود به‌زودی</span></a>
+          </article>
+        </div>
+        <aside class="notice" id="unsupported" hidden>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5m0 3h.01M10 3.8 2.9 17a2 2 0 0 0 1.8 3h14.6a2 2 0 0 0 1.8-3L14 3.8a2.3 2.3 0 0 0-4 0Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <p data-i18n="unsupported">برای این دستگاه هنوز نسخهٔ دانلودی معرفی نشده است. می‌توانید یکی از پلتفرم‌های پشتیبانی‌شده را انتخاب کنید.</p>
+        </aside>
+        <aside class="notice" id="release-note">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v5m0-8h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+          <p data-i18n="releaseNote">لینک‌های دانلود عمومی پس از انتشار فایل‌های نصب فعال می‌شوند.</p>
+        </aside>
+      </section>
+    </main>
+
+    <footer>
+      <span data-i18n="footer">Harmoney Pro · دریافت از منبع رسمی</span>
+      <a href="https://github.com/MilMit/Harmoney-VPN" target="_blank" rel="noopener noreferrer" data-i18n="community">نسخهٔ عمومی Harmoney</a>
+    </footer>
+  </div>
+  <script>
+    // Set these to public HTTPS URLs after publishing each installer.
+    const downloads = { android: "", windows: "", linux: "" };
+    const strings = {
+      fa: {
+        pageTitle: "دانلود Harmoney Pro", eyebrow: "دانلود رسمی", title: 'Harmoney Pro برای <span class="gradient">دستگاه شما</span>',
+        intro: "سیستم‌عامل دستگاه شناسایی می‌شود تا نسخهٔ مناسب را راحت‌تر پیدا کنید. اگر خواستید، می‌توانید پلتفرم دیگری را هم انتخاب کنید.",
+        detected: "پلتفرم تشخیص‌داده‌شده: {platform}", choose: "پلتفرم خود را انتخاب کنید", available: "Android، Windows و Linux",
+        recommended: "پیشنهادی برای شما", androidDesc: "گوشی‌ها و تبلت‌های Android", windowsDesc: "رایانه‌های Windows 10 و 11",
+        linuxDesc: "Ubuntu، Debian و توزیع‌های دیگر", soon: "دانلود به‌زودی", download: "دانلود Harmoney Pro",
+        unsupported: "برای این دستگاه هنوز نسخهٔ دانلودی معرفی نشده است. می‌توانید یکی از پلتفرم‌های پشتیبانی‌شده را انتخاب کنید.",
+        releaseNote: "لینک‌های دانلود عمومی پس از انتشار فایل‌های نصب فعال می‌شوند.", footer: "Harmoney Pro · دریافت از منبع رسمی",
+        community: "نسخهٔ عمومی Harmoney", android: "Android", windows: "Windows", linux: "Linux", other: "نامشخص"
+      },
+      en: {
+        pageTitle: "Download Harmoney Pro", eyebrow: "Official downloads", title: 'Harmoney Pro for <span class="gradient">your device</span>',
+        intro: "We detect your device so you can find the right build quickly. You can also choose another platform below.",
+        detected: "Detected platform: {platform}", choose: "Choose your platform", available: "Android, Windows, and Linux",
+        recommended: "Recommended for you", androidDesc: "Android phones and tablets", windowsDesc: "Windows 10 and 11 PCs",
+        linuxDesc: "Ubuntu, Debian, and other distributions", soon: "Download coming soon", download: "Download Harmoney Pro",
+        unsupported: "A download for this device is not listed yet. You can choose one of the supported platforms.",
+        releaseNote: "Public download links will be enabled when the installers are released.", footer: "Harmoney Pro · Official downloads",
+        community: "Harmoney Community edition", android: "Android", windows: "Windows", linux: "Linux", other: "Unknown"
+      },
+      ar: {
+        pageTitle: "تنزيل Harmoney Pro", eyebrow: "التنزيلات الرسمية", title: 'Harmoney Pro على <span class="gradient">جهازك</span>',
+        intro: "نتعرّف على نظام جهازك لمساعدتك في العثور على الإصدار المناسب. ويمكنك اختيار منصة أخرى أدناه.",
+        detected: "المنصة المكتشفة: {platform}", choose: "اختر منصتك", available: "Android وWindows وLinux",
+        recommended: "مقترح لك", androidDesc: "هواتف وأجهزة Android اللوحية", windowsDesc: "أجهزة Windows 10 و11",
+        linuxDesc: "Ubuntu وDebian وتوزيعات أخرى", soon: "التنزيل قريبًا", download: "تنزيل Harmoney Pro",
+        unsupported: "لا يتوفر تنزيل لهذا الجهاز بعد. يمكنك اختيار إحدى المنصات المدعومة.",
+        releaseNote: "ستُفعّل روابط التنزيل العامة بعد نشر ملفات التثبيت.", footer: "Harmoney Pro · التنزيلات الرسمية",
+        community: "إصدار Harmoney المجتمعي", android: "Android", windows: "Windows", linux: "Linux", other: "غير معروف"
+      },
+      de: {
+        pageTitle: "Harmoney Pro herunterladen", eyebrow: "Offizielle Downloads", title: 'Harmoney Pro für <span class="gradient">dein Gerät</span>',
+        intro: "Wir erkennen dein Betriebssystem, damit du schnell die passende Version findest. Du kannst unten auch eine andere Plattform auswählen.",
+        detected: "Erkannte Plattform: {platform}", choose: "Plattform auswählen", available: "Android, Windows und Linux",
+        recommended: "Für dich empfohlen", androidDesc: "Android-Smartphones und -Tablets", windowsDesc: "Windows 10 und 11",
+        linuxDesc: "Ubuntu, Debian und weitere Distributionen", soon: "Download folgt in Kürze", download: "Harmoney Pro herunterladen",
+        unsupported: "Für dieses Gerät ist noch kein Download verfügbar. Du kannst eine unterstützte Plattform auswählen.",
+        releaseNote: "Öffentliche Downloadlinks werden nach der Veröffentlichung der Installationsdateien aktiviert.", footer: "Harmoney Pro · Offizielle Downloads",
+        community: "Harmoney Community Edition", android: "Android", windows: "Windows", linux: "Linux", other: "Unbekannt"
+      },
+      es: {
+        pageTitle: "Descargar Harmoney Pro", eyebrow: "Descargas oficiales", title: 'Harmoney Pro para <span class="gradient">tu dispositivo</span>',
+        intro: "Detectamos el sistema operativo de tu dispositivo para ayudarte a encontrar la versión adecuada. También puedes elegir otra plataforma.",
+        detected: "Plataforma detectada: {platform}", choose: "Elige tu plataforma", available: "Android, Windows y Linux",
+        recommended: "Recomendado para ti", androidDesc: "Teléfonos y tabletas Android", windowsDesc: "Equipos Windows 10 y 11",
+        linuxDesc: "Ubuntu, Debian y otras distribuciones", soon: "Descarga próximamente", download: "Descargar Harmoney Pro",
+        unsupported: "Aún no hay una descarga para este dispositivo. Puedes elegir una plataforma compatible.",
+        releaseNote: "Los enlaces públicos se activarán cuando se publiquen los instaladores.", footer: "Harmoney Pro · Descargas oficiales",
+        community: "Edición comunitaria de Harmoney", android: "Android", windows: "Windows", linux: "Linux", other: "Desconocido"
+      },
+      fr: {
+        pageTitle: "Télécharger Harmoney Pro", eyebrow: "Téléchargements officiels", title: 'Harmoney Pro pour <span class="gradient">votre appareil</span>',
+        intro: "Nous détectons le système de votre appareil pour vous aider à trouver la bonne version. Vous pouvez aussi choisir une autre plateforme.",
+        detected: "Plateforme détectée : {platform}", choose: "Choisissez votre plateforme", available: "Android, Windows et Linux",
+        recommended: "Recommandé pour vous", androidDesc: "Téléphones et tablettes Android", windowsDesc: "Ordinateurs Windows 10 et 11",
+        linuxDesc: "Ubuntu, Debian et autres distributions", soon: "Téléchargement bientôt disponible", download: "Télécharger Harmoney Pro",
+        unsupported: "Aucun téléchargement n’est encore proposé pour cet appareil. Vous pouvez choisir une plateforme prise en charge.",
+        releaseNote: "Les liens publics seront activés après la publication des fichiers d’installation.", footer: "Harmoney Pro · Téléchargements officiels",
+        community: "Édition communautaire Harmoney", android: "Android", windows: "Windows", linux: "Linux", other: "Inconnu"
+      },
+      it: {
+        pageTitle: "Scarica Harmoney Pro", eyebrow: "Download ufficiali", title: 'Harmoney Pro per <span class="gradient">il tuo dispositivo</span>',
+        intro: "Rileviamo il sistema del dispositivo per aiutarti a trovare la versione corretta. Puoi anche scegliere un’altra piattaforma.",
+        detected: "Piattaforma rilevata: {platform}", choose: "Scegli la piattaforma", available: "Android, Windows e Linux",
+        recommended: "Consigliato per te", androidDesc: "Telefoni e tablet Android", windowsDesc: "Computer Windows 10 e 11",
+        linuxDesc: "Ubuntu, Debian e altre distribuzioni", soon: "Download in arrivo", download: "Scarica Harmoney Pro",
+        unsupported: "Non è ancora disponibile un download per questo dispositivo. Puoi scegliere una piattaforma supportata.",
+        releaseNote: "I link pubblici saranno attivati quando verranno pubblicati i file di installazione.", footer: "Harmoney Pro · Download ufficiali",
+        community: "Edizione Community di Harmoney", android: "Android", windows: "Windows", linux: "Linux", other: "Sconosciuto"
+      },
+      ru: {
+        pageTitle: "Скачать Harmoney Pro", eyebrow: "Официальные загрузки", title: 'Harmoney Pro для <span class="gradient">вашего устройства</span>',
+        intro: "Мы определяем систему устройства, чтобы помочь вам быстро найти подходящую версию. Ниже можно выбрать и другую платформу.",
+        detected: "Определённая платформа: {platform}", choose: "Выберите платформу", available: "Android, Windows и Linux",
+        recommended: "Рекомендуем вам", androidDesc: "Телефоны и планшеты Android", windowsDesc: "Компьютеры с Windows 10 и 11",
+        linuxDesc: "Ubuntu, Debian и другие дистрибутивы", soon: "Скоро будет доступно", download: "Скачать Harmoney Pro",
+        unsupported: "Для этого устройства пока нет загрузки. Вы можете выбрать поддерживаемую платформу.",
+        releaseNote: "Публичные ссылки появятся после публикации установочных файлов.", footer: "Harmoney Pro · Официальные загрузки",
+        community: "Community-версия Harmoney", android: "Android", windows: "Windows", linux: "Linux", other: "Неизвестно"
+      },
+      tr: {
+        pageTitle: "Harmoney Pro'yu indir", eyebrow: "Resmî indirmeler", title: '<span class="gradient">Cihazınız</span> için Harmoney Pro',
+        intro: "Uygun sürümü kolayca bulmanız için cihazınızın işletim sistemini algılıyoruz. Aşağıdan başka bir platform da seçebilirsiniz.",
+        detected: "Algılanan platform: {platform}", choose: "Platformunuzu seçin", available: "Android, Windows ve Linux",
+        recommended: "Sizin için önerilen", androidDesc: "Android telefonlar ve tabletler", windowsDesc: "Windows 10 ve 11 bilgisayarlar",
+        linuxDesc: "Ubuntu, Debian ve diğer dağıtımlar", soon: "İndirme yakında", download: "Harmoney Pro'yu indir",
+        unsupported: "Bu cihaz için henüz indirme yok. Desteklenen platformlardan birini seçebilirsiniz.",
+        releaseNote: "Genel indirme bağlantıları kurulum dosyaları yayımlandığında etkinleştirilecek.", footer: "Harmoney Pro · Resmî indirmeler",
+        community: "Harmoney Topluluk sürümü", android: "Android", windows: "Windows", linux: "Linux", other: "Bilinmiyor"
+      },
+      zh: {
+        pageTitle: "下载 Harmoney Pro", eyebrow: "官方下载", title: '适用于<span class="gradient">你的设备</span>的 Harmoney Pro',
+        intro: "我们会识别设备系统，帮助你快速找到合适的版本。你也可以在下方选择其他平台。",
+        detected: "检测到的平台：{platform}", choose: "选择你的平台", available: "Android、Windows 和 Linux",
+        recommended: "为你推荐", androidDesc: "Android 手机和平板电脑", windowsDesc: "Windows 10 和 11 电脑",
+        linuxDesc: "Ubuntu、Debian 及其他发行版", soon: "即将提供下载", download: "下载 Harmoney Pro",
+        unsupported: "此设备暂时没有可用下载。你可以选择一个受支持的平台。",
+        releaseNote: "安装包发布后将启用公开下载链接。", footer: "Harmoney Pro · 官方下载",
+        community: "Harmoney 社区版", android: "Android", windows: "Windows", linux: "Linux", other: "未知"
+      }
+    };
+    const platform = (() => {
+      const ua = navigator.userAgent || "";
+      if (/Android/i.test(ua)) return "android";
+      if (/Windows/i.test(ua)) return "windows";
+      if (/Linux/i.test(ua)) return "linux";
+      return "other";
+    })();
+    const supportedLanguages = Object.keys(strings);
+    const preferredLanguages = navigator.languages?.length ? navigator.languages : [navigator.language || "en"];
+    let language = preferredLanguages
+      .map((locale) => locale.toLowerCase().split("-")[0])
+      .find((code) => supportedLanguages.includes(code)) || "en";
+    const cards = [...document.querySelectorAll("[data-platform]")];
+    const languageSelect = document.getElementById("language");
+    const setLanguage = (next) => {
+      language = next;
+      const copy = strings[language];
+      document.documentElement.lang = language;
+      document.documentElement.dir = ["ar", "fa"].includes(language) ? "rtl" : "ltr";
+      document.querySelectorAll("[data-i18n]").forEach((element) => {
+        const key = element.dataset.i18n;
+        if (copy[key]) {
+          if (key === "title") element.innerHTML = copy[key];
+          else element.textContent = copy[key];
+        }
+      });
+      languageSelect.value = language;
+      const platformName = copy[platform] || copy.other;
+      document.getElementById("detected-label").textContent = copy.detected.replace("{platform}", platformName);
+      document.getElementById("unsupported").hidden = platform !== "other";
+      document.title = copy.pageTitle;
+      cards.forEach((card) => {
+        const key = card.dataset.platform;
+        const link = card.querySelector("[data-download]");
+        card.classList.toggle("recommended", key === platform);
+        const url = downloads[key].trim();
+        if (url.startsWith("https://")) {
+          link.href = url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.removeAttribute("aria-disabled");
+          link.querySelector("span").textContent = copy.download;
+        } else {
+          link.href = "#";
+          link.setAttribute("aria-disabled", "true");
+          link.querySelector("span").textContent = copy.soon;
+        }
+      });
+    };
+    cards.forEach((card) => card.querySelector("[data-download]").addEventListener("click", (event) => {
+      if (event.currentTarget.getAttribute("aria-disabled") === "true") event.preventDefault();
+    }));
+    languageSelect.addEventListener("change", () => setLanguage(languageSelect.value));
+    setLanguage(language);
+  </script>
+</body>
+</html>

@@ -24,7 +24,7 @@ Linux requires GTK 3 and Ayatana AppIndicator development packages. The root REA
 ## Harmoney Pro download page
 
 ```sh
-flutter build apk --dart-define=HARMONEY_PRO_DOWNLOAD_URL=https://harmoney-pro-download.candidberry8.chatgpt.site
+flutter build apk --dart-define=HARMONEY_PRO_DOWNLOAD_URL=https://milmit.github.io/Harmoney-VPN/
 ```
 
 The public edition opens the platform-aware download page by default. Use the define above to override it for a custom distribution.
