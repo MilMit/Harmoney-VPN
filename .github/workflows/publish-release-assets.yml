@@ -125,10 +125,13 @@ jobs:
           cp release-assets/android-splits/app-x86_64-release.apk "release-assets/HarmoneyVPN-${VERSION}-android-x86_64.apk"
           cp "release-assets/linux-installers/HarmoneyVPN-${VERSION}-amd64.deb" release-assets/
           cp "release-assets/linux-installers/HarmoneyVPN-${VERSION}-x86_64.AppImage" release-assets/
+          cp "release-assets/HarmoneyVPN-${VERSION}-amd64.deb" release-assets/harmoney-community-linux-amd64.deb
+          cp "release-assets/HarmoneyVPN-${VERSION}-x86_64.AppImage" release-assets/harmoney-community-linux-x86_64.AppImage
           test -s release-assets/windows-bundle/connectivity_plus_plugin.dll
           test -s release-assets/windows-bundle/flutter_secure_storage_windows_plugin.dll
           installer=(release-assets/windows-installer/*.exe)
           test -s "${installer[0]}"
+          cp "${installer[0]}" release-assets/harmoney-community-windows-x64-setup.exe
           (cd release-assets/linux-bundle && zip -qr ../harmoney-community-linux.zip .)
           (cd release-assets/windows-bundle && zip -qr ../harmoney-community-windows.zip .)
           test -s release-assets/harmoney-community-android.apk
@@ -162,6 +165,9 @@ jobs:
             release-assets/HarmoneyVPN-*-android-*.apk \
             release-assets/HarmoneyVPN-*.deb \
             release-assets/HarmoneyVPN-*.AppImage \
+            release-assets/harmoney-community-linux-amd64.deb \
+            release-assets/harmoney-community-linux-x86_64.AppImage \
+            release-assets/harmoney-community-windows-x64-setup.exe \
             release-assets/harmoney-community-linux.zip \
             release-assets/harmoney-community-windows.zip \
             release-assets/windows-installer/*.exe \
