@@ -30,13 +30,13 @@ jobs:
       - working-directory: apps/flutter
         run: flutter pub get
       - working-directory: apps/flutter
-        run: flutter build apk --release
+        run: flutter build apk --release --obfuscate --split-debug-info="$RUNNER_TEMP/flutter-symbols"
       - uses: actions/upload-artifact@v4
         with:
           name: harmoney-community-android
           path: apps/flutter/build/app/outputs/flutter-apk/app-release.apk
       - working-directory: apps/flutter
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --obfuscate --split-debug-info="$RUNNER_TEMP/flutter-symbols"
       - uses: actions/upload-artifact@v4
         with:
           name: harmoney-community-android-splits
@@ -60,7 +60,7 @@ jobs:
       - working-directory: apps/flutter
         run: flutter pub get
       - working-directory: apps/flutter
-        run: flutter build linux --release
+        run: flutter build linux --release --obfuscate --split-debug-info="$RUNNER_TEMP/flutter-symbols"
       - name: Package Linux installers
         working-directory: apps/flutter
         run: |
@@ -88,7 +88,7 @@ jobs:
       - working-directory: apps/flutter
         run: flutter pub get
       - working-directory: apps/flutter
-        run: flutter build windows --release
+        run: flutter build windows --release --obfuscate --split-debug-info="$env:RUNNER_TEMP/flutter-symbols"
       - name: Install Inno Setup
         run: choco install innosetup --yes --no-progress
       - name: Build Windows installer
