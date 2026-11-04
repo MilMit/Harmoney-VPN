@@ -11,6 +11,8 @@ class AppState extends ChangeNotifier {
   static const _themeKey = 'theme_mode';
   static const _localeKey = 'locale';
   static const _autoConnectKey = 'auto_connect';
+  static const _launchOnStartupKey = 'launch_on_startup';
+  static const _startMinimizedKey = 'start_minimized';
   static const _killSwitchKey = 'kill_switch';
   static const _dnsProtectionKey = 'dns_protection';
   static const _ipv6ProtectionKey = 'ipv6_protection';
@@ -26,6 +28,8 @@ class AppState extends ChangeNotifier {
   ThemeMode themeMode = ThemeMode.system;
   Locale locale = const Locale('en');
   bool autoConnect = true;
+  bool launchOnStartup = false;
+  bool startMinimized = false;
   bool killSwitch = true;
   bool dnsProtection = true;
   bool ipv6Protection = true;
@@ -58,6 +62,8 @@ class AppState extends ChangeNotifier {
       prefs.getString(_localeKey) ?? 'fa',
     ); // Default to Persian/Farsi as requested
     state.autoConnect = prefs.getBool(_autoConnectKey) ?? true;
+    state.launchOnStartup = prefs.getBool(_launchOnStartupKey) ?? false;
+    state.startMinimized = prefs.getBool(_startMinimizedKey) ?? false;
     state.killSwitch = prefs.getBool(_killSwitchKey) ?? true;
     state.dnsProtection = prefs.getBool(_dnsProtectionKey) ?? true;
     state.ipv6Protection = prefs.getBool(_ipv6ProtectionKey) ?? true;
@@ -97,6 +103,10 @@ class AppState extends ChangeNotifier {
 
   Future<void> setAutoConnect(bool value) =>
       _setBool(_autoConnectKey, value, () => autoConnect = value);
+  Future<void> setLaunchOnStartup(bool value) =>
+      _setBool(_launchOnStartupKey, value, () => launchOnStartup = value);
+  Future<void> setStartMinimized(bool value) =>
+      _setBool(_startMinimizedKey, value, () => startMinimized = value);
   Future<void> setKillSwitch(bool value) =>
       _setBool(_killSwitchKey, value, () => killSwitch = value);
   Future<void> setDnsProtection(bool value) =>

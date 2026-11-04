@@ -26,9 +26,8 @@ class TalkerLogsPage extends StatelessWidget {
           cardColor: Color(0xFF171D2B),
           textColor: Colors.white,
         ),
-        appBarTitle: isFa
-            ? 'لاگ‌های فنی و کنسول دیباگ'
-            : 'Technical Logs & Diagnostics',
+        appBarTitle:
+            isFa ? 'لاگ‌های فنی و کنسول دیباگ' : 'Technical Logs & Diagnostics',
       ),
     );
   }

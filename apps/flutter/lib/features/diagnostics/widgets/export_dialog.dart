@@ -35,8 +35,7 @@ class _ExportDialogState extends State<ExportDialog> {
   String? _error;
 
   String get _defaultDestination {
-    final home =
-        Platform.environment['HOME'] ??
+    final home = Platform.environment['HOME'] ??
         Platform.environment['USERPROFILE'] ??
         Directory.current.path;
     return '$home${Platform.pathSeparator}Desktop${Platform.pathSeparator}Harmoney_Connections';

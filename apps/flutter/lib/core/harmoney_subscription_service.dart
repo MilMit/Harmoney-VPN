@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'harmoney_subscription_refresh_scheduler.dart';
@@ -140,15 +141,55 @@ class HarmoneySubscriptionService {
 
   // Do not use DioClient here: its diagnostic interceptor logs request URLs,
   // and subscription URLs can contain bearer credentials.
-  final Dio _dio = Dio(
-    BaseOptions(
+  late final Dio _dio = _createSecureSubscriptionDio();
+
+  static Dio _createSecureSubscriptionDio() {
+    final dio = Dio(BaseOptions(
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 20),
       sendTimeout: const Duration(seconds: 12),
       responseType: ResponseType.plain,
       validateStatus: (status) => status != null && status < 500,
-    ),
-  );
+    ));
+
+    dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        // Anti-Proxy: Bypass local sniffing/intercepting proxies
+        client.findProxy = (uri) => 'DIRECT';
+        // Reject unverified/self-signed certs immediately
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => false;
+        return client;
+      },
+      validateCertificate: (X509Certificate? cert, String host, int port) {
+        if (cert == null) return false;
+        final issuer = cert.issuer.toLowerCase();
+        final subject = cert.subject.toLowerCase();
+        const suspiciousCa = [
+          'charles',
+          'httptoolkit',
+          'http toolkit',
+          'mitmproxy',
+          'portswigger',
+          'burp',
+          'fiddler',
+          'proxyman',
+          'whistle',
+          'reqable',
+        ];
+        if (suspiciousCa.any((ca) => issuer.contains(ca) || subject.contains(ca))) {
+          return false;
+        }
+        if (cert.issuer == cert.subject) {
+          return false;
+        }
+        return true;
+      },
+    );
+
+    return dio;
+  }
   final Map<String,
           ({DateTime fetchedAt, List<HarmoneySubscriptionNode> nodes})>
       _nodeCache = {};
@@ -317,6 +358,39 @@ class HarmoneySubscriptionService {
         }
       }
     }
+  }
+
+  Future<HarmoneySubscription?> refreshSubscription(String id) async {
+    final entries = await list();
+    final index = entries.indexWhere((entry) => entry.id == id);
+    if (index == -1) return null;
+    final entry = entries[index];
+    HarmoneySubscription updated;
+    try {
+      final fetched = await _fetch(entry.url);
+      if (fetched.count == 0) {
+        throw const FormatException('No supported VPN servers found.');
+      }
+      updated = entry.copyWith(
+        nodeCount: fetched.count,
+        lastUpdated: DateTime.now(),
+        clearError: true,
+        uploadBytes: fetched.uploadBytes,
+        downloadBytes: fetched.downloadBytes,
+        totalBytes: fetched.totalBytes,
+        expiresAt: fetched.expiresAt,
+        requiredAppVersion: fetched.requiredAppVersion,
+      );
+    } catch (error) {
+      updated = entry.copyWith(error: _shortError(error));
+    }
+    entries[index] = updated;
+    await _save(entries);
+    _nodeCache.clear();
+    if (updated.error == null) {
+      _publishSubscriptionWarnings([updated]);
+    }
+    return updated;
   }
 
   Future<void> remove(String id) async {

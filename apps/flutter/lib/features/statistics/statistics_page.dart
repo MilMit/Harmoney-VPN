@@ -10,7 +10,12 @@ import '../../core/traffic_analytics_service.dart';
 import 'package:milmit_vpn_client/app/localized_text.dart';
 
 class StatisticsPage extends StatefulWidget {
-  const StatisticsPage({super.key});
+  final bool isEmbedded;
+
+  const StatisticsPage({
+    super.key,
+    this.isEmbedded = false,
+  });
 
   @override
   State<StatisticsPage> createState() => _StatisticsPageState();
@@ -34,10 +39,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   Future<void> _loadLatestSpeed() async {
-    final history = await NetworkSpeedTest.getHistory();
-    if (history.isNotEmpty && mounted) {
-      setState(() => _latestSpeed = history.first);
-    }
+    try {
+      final history = await NetworkSpeedTest.getHistory();
+      if (history.isNotEmpty && mounted) {
+        setState(() => _latestSpeed = history.first);
+      }
+    } catch (_) {}
   }
 
   @override
@@ -63,7 +70,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 const Icon(Icons.data_usage_rounded, color: Color(0xFF00D4AA)),
                 const SizedBox(width: 10),
                 LocalizedText(
-                  isPersian ? 'تنظیم سقف مصرف ماهانه' : 'Monthly Data Quota',
+                  localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'تنظیم سقف مصرف ماهانه'
+                          : 'Monthly Data Quota')),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -77,9 +88,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 LocalizedText(
-                  isPersian
-                      ? 'با رسیدن به این سقف، برنامه به شما هشدار خواهد داد.'
-                      : 'You will receive visual alerts when reaching this limit.',
+                  localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'با رسیدن به این سقف، برنامه به شما هشدار خواهد داد.'
+                          : 'You will receive visual alerts when reaching this limit.')),
                   style: const TextStyle(color: Colors.white70, fontSize: 13),
                 ),
                 const SizedBox(height: 20),
@@ -87,7 +100,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   child: LocalizedText(
                     selectedGb > 0
                         ? '${selectedGb.toStringAsFixed(0)} GB'
-                        : (isPersian ? 'نامحدود (غیرفعال)' : 'Unlimited (Off)'),
+                        : (localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'نامحدود (غیرفعال)'
+                                : 'Unlimited (Off)'))),
                     style: const TextStyle(
                       color: Color(0xFF61F2C2),
                       fontSize: 26,
@@ -111,22 +128,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 const Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    LocalizedText(
-                      '0 GB (Off)',
-                      style: TextStyle(color: Colors.white38, fontSize: 11),
-                    ),
-                    LocalizedText(
-                      '50 GB',
-                      style: TextStyle(color: Colors.white38, fontSize: 11),
-                    ),
-                    LocalizedText(
-                      '100 GB',
-                      style: TextStyle(color: Colors.white38, fontSize: 11),
-                    ),
-                    LocalizedText(
-                      '200 GB',
-                      style: TextStyle(color: Colors.white38, fontSize: 11),
-                    ),
+                    LocalizedText('0 GB (Off)',
+                        style: TextStyle(color: Colors.white38, fontSize: 11)),
+                    LocalizedText('50 GB',
+                        style: TextStyle(color: Colors.white38, fontSize: 11)),
+                    LocalizedText('100 GB',
+                        style: TextStyle(color: Colors.white38, fontSize: 11)),
+                    LocalizedText('200 GB',
+                        style: TextStyle(color: Colors.white38, fontSize: 11)),
                   ],
                 ),
               ],
@@ -135,7 +144,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
               TextButton(
                 onPressed: () => Navigator.pop(ctx),
                 child: LocalizedText(
-                  isPersian ? 'انصراف' : 'Cancel',
+                  localizedUiText(context, (isPersian ? 'انصراف' : 'Cancel')),
                   style: const TextStyle(color: Colors.white60),
                 ),
               ),
@@ -145,13 +154,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   foregroundColor: const Color(0xFF07212E),
                 ),
                 onPressed: () {
-                  TrafficAnalyticsService.instance.setQuotaLimit(
-                    selectedGb > 0 ? selectedGb : null,
-                  );
+                  TrafficAnalyticsService.instance
+                      .setQuotaLimit(selectedGb > 0 ? selectedGb : null);
                   Navigator.pop(ctx);
                 },
                 child: LocalizedText(
-                  isPersian ? 'ذخیره سقف' : 'Save Quota',
+                  localizedUiText(
+                      context, (isPersian ? 'ذخیره سقف' : 'Save Quota')),
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
@@ -167,6 +176,41 @@ class _StatisticsPageState extends State<StatisticsPage> {
     final isPersian = Localizations.localeOf(context).languageCode == 'fa';
     final s = _snapshot;
 
+    final bodyContent = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 620),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header with title and live active badge
+            _buildHeader(isPersian, s.isConnected),
+            const SizedBox(height: 18),
+
+            // Live Bandwidth Graph Card
+            _buildLiveChartCard(s, isPersian),
+            const SizedBox(height: 18),
+
+            // Quota & Data Alert Card
+            _buildQuotaCard(s, isPersian),
+            const SizedBox(height: 18),
+
+            // Usage 4-Grid Cards (Today, Month, Peak, Lifetime)
+            _buildUsageGrid(s, isPersian),
+            const SizedBox(height: 18),
+
+            // Session & Speed Benchmark Card
+            _buildSessionAndSpeedCard(s, isPersian),
+
+            const SizedBox(height: 90),
+          ],
+        ),
+      ),
+    );
+
+    if (widget.isEmbedded) {
+      return bodyContent;
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SafeArea(
@@ -175,36 +219,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             horizontal: 18.w.clamp(14.0, 28.0),
             vertical: 14.h.clamp(10.0, 22.0),
           ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 620),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Header
-                  _buildHeader(isPersian, s.isConnected),
-                  const SizedBox(height: 18),
-
-                  // Live Bandwidth Graph Card
-                  _buildLiveChartCard(s, isPersian),
-                  const SizedBox(height: 18),
-
-                  // Quota & Data Alert Card
-                  _buildQuotaCard(s, isPersian),
-                  const SizedBox(height: 18),
-
-                  // Usage 4-Grid Cards
-                  _buildUsageGrid(s, isPersian),
-                  const SizedBox(height: 18),
-
-                  // Session & Speed Benchmark Card
-                  _buildSessionAndSpeedCard(s, isPersian),
-
-                  const SizedBox(height: 90),
-                ],
-              ),
-            ),
-          ),
+          child: bodyContent,
         ),
       ),
     );
@@ -218,7 +233,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             LocalizedText(
-              isPersian ? 'نمودار و آمار ترافیک' : 'Traffic Analytics',
+              localizedUiText(context,
+                  (isPersian ? 'نمودار و آمار ترافیک' : 'Traffic Analytics')),
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 20.sp.clamp(17.0, 24.0),
@@ -228,21 +244,27 @@ class _StatisticsPageState extends State<StatisticsPage> {
             ),
             const SizedBox(height: 2),
             LocalizedText(
-              isPersian
-                  ? 'مانیتورینگ مصرف دیتا، سرعت زنده و سقف ترافیک'
-                  : 'Live bandwidth, data accounting & quota',
+              localizedUiText(
+                  context,
+                  (isPersian
+                      ? 'مانیتورینگ مصرف دیتا، سرعت زنده و سقف ترافیک'
+                      : 'Live bandwidth, data accounting & quota')),
               style: const TextStyle(color: Colors.white60, fontSize: 12),
             ),
           ],
         ),
         const SizedBox(height: 10),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: const Color(0xFF00D4AA).withValues(alpha: 0.15),
+            color: isConnected
+                ? const Color(0xFF00D4AA).withValues(alpha: 0.15)
+                : Colors.white.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: const Color(0xFF00D4AA).withValues(alpha: 0.4),
+              color: isConnected
+                  ? const Color(0xFF00D4AA).withValues(alpha: 0.45)
+                  : Colors.white24,
             ),
           ),
           child: Row(
@@ -253,25 +275,31 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 height: 8,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: isConnected ? const Color(0xFF00D4AA) : Colors.white38,
-                  boxShadow: isConnected
-                      ? const [
-                          BoxShadow(
-                            color: Color(0xFF00D4AA),
-                            blurRadius: 6,
-                            spreadRadius: 1,
-                          ),
-                        ]
-                      : null,
+                  color: isConnected
+                      ? const Color(0xFF00F5B8)
+                      : const Color(0xFFFFC46B),
+                  boxShadow: [
+                    BoxShadow(
+                      color: isConnected
+                          ? const Color(0xFF00F5B8)
+                          : const Color(0xFFFFC46B),
+                      blurRadius: 6,
+                      spreadRadius: 1,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               LocalizedText(
                 isConnected
-                    ? (isPersian ? 'مانیتورینگ فعال' : 'Live Active')
-                    : (isPersian ? 'در انتظار اتصال' : 'Waiting for VPN'),
-                style: const TextStyle(
-                  color: Color(0xFF61F2C2),
+                    ? (localizedUiText(context,
+                        (isPersian ? 'مانیتورینگ فعال (متصل)' : 'Live Monitoring Active')))
+                    : (localizedUiText(context,
+                        (isPersian ? 'در انتظار اتصال VPN (استندبای)' : 'Waiting for VPN (Standby)'))),
+                style: TextStyle(
+                  color: isConnected
+                      ? const Color(0xFF00F5B8)
+                      : const Color(0xFFFFC46B),
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
                 ),
@@ -284,13 +312,26 @@ class _StatisticsPageState extends State<StatisticsPage> {
   }
 
   Widget _buildLiveChartCard(TrafficDataSnapshot s, bool isPersian) {
-    final spots = s.recentHistory.isEmpty
-        ? const [
-            TrafficSpeedPoint(timestamp: 0, downloadMbps: 0, uploadMbps: 0)
-          ]
-        : s.recentHistory;
-    final minX = spots.isNotEmpty ? spots.first.timestamp : 0.0;
-    final lastX = spots.isNotEmpty ? spots.last.timestamp : 0.0;
+    // Ensure we always have at least 2 points to avoid spline curve errors in fl_chart
+    final List<TrafficSpeedPoint> spots;
+    if (s.recentHistory.isEmpty) {
+      spots = [
+        const TrafficSpeedPoint(timestamp: 0, downloadMbps: 0, uploadMbps: 0),
+        const TrafficSpeedPoint(timestamp: 1, downloadMbps: 0, uploadMbps: 0),
+      ];
+    } else if (s.recentHistory.length == 1) {
+      final first = s.recentHistory.first;
+      spots = [
+        TrafficSpeedPoint(
+            timestamp: first.timestamp - 1, downloadMbps: 0, uploadMbps: 0),
+        first,
+      ];
+    } else {
+      spots = s.recentHistory;
+    }
+
+    final minX = spots.first.timestamp;
+    final lastX = spots.last.timestamp;
     final maxX = lastX > minX ? lastX : minX + 30.0;
 
     double maxY = 5.0;
@@ -298,7 +339,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
       if (pt.downloadMbps > maxY) maxY = pt.downloadMbps;
       if (pt.uploadMbps > maxY) maxY = pt.uploadMbps;
     }
-    maxY = (maxY * 1.3).ceilToDouble();
+    maxY = (maxY * 1.25).ceilToDouble();
+    final horizontalInterval = (maxY / 3).clamp(1.0, 10000.0);
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -335,19 +377,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
+              Row(
                 children: [
-                  const Icon(
-                    Icons.show_chart_rounded,
-                    color: Color(0xFF00D4AA),
-                    size: 20,
-                  ),
+                  const Icon(Icons.show_chart_rounded,
+                      color: Color(0xFF00D4AA), size: 20),
                   const SizedBox(width: 8),
                   LocalizedText(
-                    isPersian ? 'سرعت زنده لحظه‌ای' : 'Live Real-Time Speed',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'سرعت زنده لحظه‌ای'
+                            : 'Live Real-Time Speed')),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -356,16 +396,21 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   ),
                 ],
               ),
-              Row(
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
                   _BadgeChip(
-                    label: isPersian ? 'دانلود' : 'DL',
+                    label:
+                        localizedUiText(context, (isPersian ? 'دانلود' : 'DL')),
                     value: TrafficDataSnapshot.formatSpeed(s.rxBps),
                     color: const Color(0xFF00D4AA),
                     icon: Icons.arrow_downward_rounded,
                   ),
                   _BadgeChip(
-                    label: isPersian ? 'آپلود' : 'UL',
+                    label:
+                        localizedUiText(context, (isPersian ? 'آپلود' : 'UL')),
                     value: TrafficDataSnapshot.formatSpeed(s.txBps),
                     color: const Color(0xFF61F2C2),
                     icon: Icons.arrow_upward_rounded,
@@ -386,7 +431,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: maxY / 3,
+                  horizontalInterval: horizontalInterval,
                   getDrawingHorizontalLine: (val) => FlLine(
                     color: Colors.white.withValues(alpha: 0.06),
                     strokeWidth: 1,
@@ -394,14 +439,37 @@ class _StatisticsPageState extends State<StatisticsPage> {
                 ),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
-                lineTouchData: const LineTouchData(enabled: false),
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipColor: (_) => const Color(0xFF07212E),
+                    tooltipRoundedRadius: 10,
+                    tooltipBorder:
+                        const BorderSide(color: Color(0xFF00D4AA), width: 1.0),
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final isDl = spot.barIndex == 0;
+                        return LineTooltipItem(
+                          '${isDl ? (isPersian ? "دانلود: " : "DL: ") : (isPersian ? "آپلود: " : "UL: ")}${spot.y.toStringAsFixed(1)} Mbps',
+                          TextStyle(
+                            color: isDl
+                                ? const Color(0xFF00D4AA)
+                                : const Color(0xFF61F2C2),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 lineBarsData: [
                   // Download Line
                   LineChartBarData(
                     spots: spots
                         .map((p) => FlSpot(p.timestamp, p.downloadMbps))
                         .toList(),
-                    isCurved: true,
+                    isCurved: spots.length > 2,
                     curveSmoothness: 0.35,
                     color: const Color(0xFF00D4AA),
                     barWidth: 3,
@@ -424,7 +492,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
                     spots: spots
                         .map((p) => FlSpot(p.timestamp, p.uploadMbps))
                         .toList(),
-                    isCurved: true,
+                    isCurved: spots.length > 2,
                     curveSmoothness: 0.35,
                     color: const Color(0xFF61F2C2),
                     barWidth: 2.2,
@@ -478,10 +546,12 @@ class _StatisticsPageState extends State<StatisticsPage> {
         children: [
           Wrap(
             alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 8,
-            runSpacing: 4,
+            runSpacing: 6,
             children: [
               Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
                     isExceeded
@@ -492,7 +562,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
                   ),
                   const SizedBox(width: 8),
                   LocalizedText(
-                    isPersian ? 'سقف مصرف ماهانه' : 'Monthly Data Quota',
+                    localizedUiText(context,
+                        (isPersian ? 'سقف مصرف ماهانه' : 'Monthly Data Quota')),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -503,15 +574,13 @@ class _StatisticsPageState extends State<StatisticsPage> {
               ),
               TextButton.icon(
                 onPressed: () => _showQuotaDialog(isPersian),
-                icon: const Icon(
-                  Icons.tune_rounded,
-                  size: 16,
-                  color: Color(0xFF00D4AA),
-                ),
+                icon: const Icon(Icons.tune_rounded,
+                    size: 16, color: Color(0xFF00D4AA)),
                 label: LocalizedText(
                   hasLimit
                       ? '${s.quotaLimitGb!.toStringAsFixed(0)} GB'
-                      : (isPersian ? 'تنظیم سقف' : 'Set Quota'),
+                      : (localizedUiText(
+                          context, (isPersian ? 'تنظیم سقف' : 'Set Quota'))),
                   style: const TextStyle(
                     color: Color(0xFF00D4AA),
                     fontSize: 12,
@@ -538,7 +607,7 @@ class _StatisticsPageState extends State<StatisticsPage> {
             runSpacing: 4,
             children: [
               LocalizedText(
-                '${TrafficDataSnapshot.formatBytes(s.monthTotalBytes)} ${isPersian ? 'مصرف شده' : 'used'}',
+                '${TrafficDataSnapshot.formatBytes(s.monthTotalBytes)} ${localizedUiText(context, (isPersian ? 'مصرف شده' : 'used'))}',
                 style: const TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
@@ -549,7 +618,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
               LocalizedText(
                 hasLimit
                     ? '${(usedPercent * 100).toStringAsFixed(1)}% / ${s.quotaLimitGb!.toStringAsFixed(0)} GB'
-                    : (isPersian ? 'بدون سقف محدودیت' : 'No Limit Set'),
+                    : (localizedUiText(context,
+                        (isPersian ? 'بدون سقف محدودیت' : 'No Limit Set'))),
                 style: TextStyle(
                   color: barColor,
                   fontSize: 12,
@@ -571,7 +641,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
           child: Column(
             children: [
               _StatTile(
-                title: isPersian ? 'مصرف امروز' : 'Today',
+                title: localizedUiText(
+                    context, (isPersian ? 'مصرف امروز' : 'Today')),
                 value: TrafficDataSnapshot.formatBytes(s.todayTotalBytes),
                 sub:
                     '↓ ${TrafficDataSnapshot.formatBytes(s.todayRxBytes)}  ↑ ${TrafficDataSnapshot.formatBytes(s.todayTxBytes)}',
@@ -580,9 +651,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
               ),
               const SizedBox(height: 12),
               _StatTile(
-                title: isPersian ? 'بالاترین سرعت' : 'Peak Speed',
+                title: localizedUiText(
+                    context, (isPersian ? 'بالاترین سرعت' : 'Peak Speed')),
                 value: TrafficDataSnapshot.formatSpeed(s.peakDownloadBps),
-                sub: isPersian ? 'اوج سرعت ثبت شده' : 'Highest recorded',
+                sub: localizedUiText(context,
+                    (isPersian ? 'اوج سرعت ثبت شده' : 'Highest recorded')),
                 icon: Icons.bolt_rounded,
                 accentColor: const Color(0xFFFFC46B),
               ),
@@ -594,7 +667,8 @@ class _StatisticsPageState extends State<StatisticsPage> {
           child: Column(
             children: [
               _StatTile(
-                title: isPersian ? 'مصرف این ماه' : 'This Month',
+                title: localizedUiText(
+                    context, (isPersian ? 'مصرف این ماه' : 'This Month')),
                 value: TrafficDataSnapshot.formatBytes(s.monthTotalBytes),
                 sub:
                     '↓ ${TrafficDataSnapshot.formatBytes(s.monthRxBytes)}  ↑ ${TrafficDataSnapshot.formatBytes(s.monthTxBytes)}',
@@ -603,9 +677,11 @@ class _StatisticsPageState extends State<StatisticsPage> {
               ),
               const SizedBox(height: 12),
               _StatTile(
-                title: isPersian ? 'کل طول عمر' : 'Lifetime Total',
+                title: localizedUiText(
+                    context, (isPersian ? 'کل طول عمر' : 'Lifetime Total')),
                 value: TrafficDataSnapshot.formatBytes(s.lifetimeTotalBytes),
-                sub: isPersian ? 'مجموع دیتا روی دستگاه' : 'All-time volume',
+                sub: localizedUiText(context,
+                    (isPersian ? 'مجموع دیتا روی دستگاه' : 'All-time volume')),
                 icon: Icons.all_inclusive_rounded,
                 accentColor: const Color(0xFFB572FF),
               ),
@@ -637,19 +713,19 @@ class _StatisticsPageState extends State<StatisticsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               Row(
                 children: [
-                  const Icon(
-                    Icons.timer_rounded,
-                    color: Color(0xFF72D9FF),
-                    size: 20,
-                  ),
+                  const Icon(Icons.timer_rounded,
+                      color: Color(0xFF72D9FF), size: 20),
                   const SizedBox(width: 8),
                   LocalizedText(
-                    isPersian ? 'مدت زمان اتصال' : 'Session Duration',
+                    localizedUiText(context,
+                        (isPersian ? 'مدت زمان اتصال' : 'Session Duration')),
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,
@@ -673,11 +749,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
           const SizedBox(height: 14),
           const Divider(color: Colors.white10),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               LocalizedText(
-                isPersian ? 'داده دانلود نشست:' : 'Session Download:',
+                localizedUiText(context,
+                    (isPersian ? 'داده دانلود نشست:' : 'Session Download:')),
                 style: const TextStyle(color: Colors.white60, fontSize: 12),
               ),
               LocalizedText(
@@ -691,11 +770,14 @@ class _StatisticsPageState extends State<StatisticsPage> {
             ],
           ),
           const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               LocalizedText(
-                isPersian ? 'داده آپلود نشست:' : 'Session Upload:',
+                localizedUiText(context,
+                    (isPersian ? 'داده آپلود نشست:' : 'Session Upload:')),
                 style: const TextStyle(color: Colors.white60, fontSize: 12),
               ),
               LocalizedText(
@@ -719,18 +801,17 @@ class _StatisticsPageState extends State<StatisticsPage> {
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.speed_rounded,
-                      color: Color(0xFF61F2C2),
-                      size: 18,
-                    ),
+                    const Icon(Icons.speed_rounded,
+                        color: Color(0xFF61F2C2), size: 18),
                     const SizedBox(width: 6),
                     LocalizedText(
-                      isPersian ? 'آخرین تست سرعت:' : 'Last Speed Benchmark:',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
+                      localizedUiText(
+                          context,
+                          (isPersian
+                              ? 'آخرین تست سرعت:'
+                              : 'Last Speed Benchmark:')),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 12),
                     ),
                   ],
                 ),

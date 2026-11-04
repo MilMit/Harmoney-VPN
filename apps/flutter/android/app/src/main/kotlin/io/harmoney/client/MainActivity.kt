@@ -58,6 +58,35 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.harmoney.vpn")
             .setMethodCallHandler { call, result ->
                 when (call.method) {
+                "installApk" -> {
+                    val filePath = call.argument<String>("filePath")
+                    if (filePath.isNullOrBlank()) {
+                        result.error("INVALID_PATH", "File path cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+                    val file = java.io.File(filePath)
+                    if (!file.exists()) {
+                        result.error("FILE_NOT_FOUND", "File does not exist: $filePath", null)
+                        return@setMethodCallHandler
+                    }
+                    try {
+                        val apkUri = androidx.core.content.FileProvider.getUriForFile(
+                            this,
+                            "${applicationContext.packageName}.fileprovider",
+                            file
+                        )
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                            setDataAndType(apkUri, "application/vnd.android.package-archive")
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("INSTALL_ERROR", e.message, null)
+                    }
+                }
+
                     "capabilities" -> thread {
                         val engine = runCatching { HarmoneyEngine.load(applicationContext) }
                         runOnUiThread { result.success(mapOf(
@@ -105,6 +134,35 @@ class MainActivity : FlutterActivity() {
         val vibrationChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "com.harmoney.vibration")
         vibrationChannel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "installApk" -> {
+                    val filePath = call.argument<String>("filePath")
+                    if (filePath.isNullOrBlank()) {
+                        result.error("INVALID_PATH", "File path cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+                    val file = java.io.File(filePath)
+                    if (!file.exists()) {
+                        result.error("FILE_NOT_FOUND", "File does not exist: $filePath", null)
+                        return@setMethodCallHandler
+                    }
+                    try {
+                        val apkUri = androidx.core.content.FileProvider.getUriForFile(
+                            this,
+                            "${applicationContext.packageName}.fileprovider",
+                            file
+                        )
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                            setDataAndType(apkUri, "application/vnd.android.package-archive")
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("INSTALL_ERROR", e.message, null)
+                    }
+                }
+
                 "hasVibrator" -> result.success(true)
                 "vibrate" -> result.success(true)
                 "cancel" -> result.success(null)
@@ -114,6 +172,35 @@ class MainActivity : FlutterActivity() {
 
         methodChannel.setMethodCallHandler { call, result ->
             when (call.method) {
+                "installApk" -> {
+                    val filePath = call.argument<String>("filePath")
+                    if (filePath.isNullOrBlank()) {
+                        result.error("INVALID_PATH", "File path cannot be empty", null)
+                        return@setMethodCallHandler
+                    }
+                    val file = java.io.File(filePath)
+                    if (!file.exists()) {
+                        result.error("FILE_NOT_FOUND", "File does not exist: $filePath", null)
+                        return@setMethodCallHandler
+                    }
+                    try {
+                        val apkUri = androidx.core.content.FileProvider.getUriForFile(
+                            this,
+                            "${applicationContext.packageName}.fileprovider",
+                            file
+                        )
+                        val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                            setDataAndType(apkUri, "application/vnd.android.package-archive")
+                            addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        startActivity(intent)
+                        result.success(true)
+                    } catch (e: Exception) {
+                        result.error("INSTALL_ERROR", e.message, null)
+                    }
+                }
+
                 "prepare" -> {
                     val requestedProtocol = call.argument<String>("protocol")
                     if (requestedProtocol == "firefox") {

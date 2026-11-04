@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:crypto/crypto.dart';
 
@@ -343,41 +344,52 @@ class HarmoneyWindowsXray {
   }
 
   Future<void> disconnect() async {
-    final stateFile = await _latestStateFile();
-    final env = <String, String>{
-      ...Platform.environment,
-      'FIRETUNNEL_STATE': stateFile?.path ?? statePath,
-    };
-    final result = await Process.run(
-      _helper,
-      ['disconnect'],
-      environment: env,
-      runInShell: false,
-    );
-    if (result.exitCode != 0) {
-      throw HarmoneyWindowsXrayException(
-        'Could not request Windows tunnel shutdown: ${_safeError([
-          result.stderr,
-          result.stdout
-        ].join(' '))}',
+    try {
+      final stateFile = await _latestStateFile();
+      final env = <String, String>{
+        ...Platform.environment,
+        'FIRETUNNEL_STATE': stateFile?.path ?? statePath,
+      };
+      final result = await Process.run(
+        _helper,
+        ['disconnect'],
+        environment: env,
+        runInShell: false,
       );
-    }
-    final deadline = DateTime.now().add(const Duration(seconds: 20));
-    while (DateTime.now().isBefore(deadline)) {
-      final state = await readState();
-      if (state == null || state['state'] == 'disconnected') return;
-      if (state['state'] == 'error') {
-        final detail = state['error']?.toString();
-        final code = state['code']?.toString();
+      if (result.exitCode != 0) {
         throw HarmoneyWindowsXrayException(
-          'Windows tunnel cleanup failed${code == null ? '' : ' ($code)'}${detail == null ? '' : ': $detail'}',
+          'Could not request Windows tunnel shutdown: ${_safeError([
+            result.stderr,
+            result.stdout
+          ].join(' '))}',
         );
       }
-      await Future<void>.delayed(const Duration(milliseconds: 200));
+      final deadline = DateTime.now().add(const Duration(seconds: 20));
+      while (DateTime.now().isBefore(deadline)) {
+        final state = await readState();
+        if (state == null || state['state'] == 'disconnected') return;
+        if (state['state'] == 'error') {
+          final detail = state['error']?.toString();
+          final code = state['code']?.toString();
+          throw HarmoneyWindowsXrayException(
+            'Windows tunnel cleanup failed${code == null ? '' : ' ($code)'}${detail == null ? '' : ': $detail'}',
+          );
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+      throw const HarmoneyWindowsXrayException(
+        'Windows tunnel cleanup did not finish within 20 seconds.',
+      );
+    } finally {
+      // Securely wipe and remove config file from disk to prevent credential/node theft
+      try {
+        final file = File(_configPath);
+        if (await file.exists()) {
+          await file.writeAsString('{}', flush: true);
+          await file.delete();
+        }
+      } catch (_) {}
     }
-    throw const HarmoneyWindowsXrayException(
-      'Windows tunnel cleanup did not finish within 20 seconds.',
-    );
   }
 
   Future<Map<String, dynamic>?> readState() async {
@@ -477,6 +489,14 @@ class HarmoneyWindowsXray {
         responseType: ResponseType.plain,
         validateStatus: (status) => status != null && status < 500,
       ),
+    );
+    client.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final http = HttpClient();
+        http.findProxy = (uri) => 'DIRECT';
+        http.badCertificateCallback = (cert, host, port) => false;
+        return http;
+      },
     );
     final output = <_XrayNode>[];
     final seen = <String>{};

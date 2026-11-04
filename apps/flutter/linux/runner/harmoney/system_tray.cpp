@@ -40,7 +40,7 @@ SystemTray::SystemTray()
     {
         exe_path[len] = '\0';
         exe_dir_ = std::filesystem::path(exe_path).parent_path().string();
-        icon_dir_ = exe_dir_ + "/data/flutter_assets/assets/icons";
+        icon_dir_ = exe_dir_ + "/data/flutter_assets/assets/images";
     }
 }
 
@@ -93,7 +93,8 @@ void SystemTray::CreateIndicator()
     app_indicator_set_status(indicator_, APP_INDICATOR_STATUS_ACTIVE);
 
     // Set title/tooltip
-    app_indicator_set_title(indicator_, "Harmoney");
+    const std::string title = Label("appName", "Harmoney");
+    app_indicator_set_title(indicator_, title.c_str());
 
     // Create and set the menu
     menu_ = CreateMenu();
@@ -147,8 +148,8 @@ GtkWidget *SystemTray::CreateMenu()
     };
 
     // Main window
-    add_item("Harmoney", TrayAction::ShowWindow);
-    add_item("Choose server...", TrayAction::OpenServerList);
+    add_item(Label("openApplication", "Open Application").c_str(), TrayAction::ShowWindow);
+    add_item(Label("chooseServer", "Choose server…").c_str(), TrayAction::OpenServerList);
     add_separator();
 
     // Connection status
@@ -157,34 +158,34 @@ GtkWidget *SystemTray::CreateMenu()
                              connection_status_ == ConnectionStatus::Disconnecting);
     add_item(status_text.c_str(), TrayAction::ConnectionStatusClick, false, false, !is_transitioning);
 
-    add_item("Preferences", TrayAction::OpenPreferences);
+    add_item(Label("preferences", "Preferences / Settings").c_str(), TrayAction::OpenPreferences);
     add_separator();
 
     // Startup Options section
-    add_label("Startup Options");
-    add_item("    Launch on startup", TrayAction::LaunchOnStartup, true, launch_on_startup_);
-    add_item("    Auto-connect", TrayAction::AutoConnect, true, auto_connect_);
-    add_item("    Sound Effect", TrayAction::SoundEffect, true, sound_effect_);
-    add_item("    Start minimized", TrayAction::StartMinimized, true, start_minimized_);
-    add_item("    Force close", TrayAction::ForceClose, true, force_close_);
+    add_label(Label("startupOptions", "Startup Options").c_str());
+    add_item(Label("launchOnStartup", "Launch on startup").c_str(), TrayAction::LaunchOnStartup, true, launch_on_startup_);
+    add_item(Label("autoConnect", "Auto-connect").c_str(), TrayAction::AutoConnect, true, auto_connect_);
+    add_item(Label("soundEffect", "Sound effect").c_str(), TrayAction::SoundEffect, true, sound_effect_);
+    add_item(Label("startMinimized", "Start minimized").c_str(), TrayAction::StartMinimized, true, start_minimized_);
+    add_item(Label("forceClose", "Force close").c_str(), TrayAction::ForceClose, true, force_close_);
     add_separator();
 
     // Service Mode section
-    add_label("Service Mode");
+    add_label(Label("serviceMode", "Service Mode").c_str());
     bool is_disconnected = IsVPNDisconnected();
-    add_item("    Proxy Service", TrayAction::ProxyService, true, proxy_service_, is_disconnected);
-    add_item("    System Proxy", TrayAction::SystemProxy, true, system_proxy_, is_disconnected);
-    add_item("    VPN (Upcoming)", TrayAction::VPNMode, true, vpn_mode_, false);
+    add_item(Label("proxyService", "Proxy Service").c_str(), TrayAction::ProxyService, true, proxy_service_, is_disconnected);
+    add_item(Label("systemProxy", "System Proxy").c_str(), TrayAction::SystemProxy, true, system_proxy_, is_disconnected);
+    add_item(Label("vpnModeUnavailable", "VPN (Unavailable)").c_str(), TrayAction::VPNMode, true, vpn_mode_, false);
     add_separator();
 
     // Actions section
-    add_item("Introduction", TrayAction::OpenIntroduction);
-    add_item("Speedtest", TrayAction::OpenSpeedTest);
-    add_item("Logs", TrayAction::OpenLogs);
+    add_item(Label("introduction", "Introduction").c_str(), TrayAction::OpenIntroduction);
+    add_item(Label("speedTest", "Speed Test").c_str(), TrayAction::OpenSpeedTest);
+    add_item(Label("logs", "Logs").c_str(), TrayAction::OpenLogs);
     add_separator();
 
     // Exit
-    add_item("Exit", TrayAction::Exit);
+    add_item(Label("exit", "Exit").c_str(), TrayAction::Exit);
 
     gtk_widget_show_all(menu);
 
@@ -227,53 +228,16 @@ void SystemTray::Cleanup()
 
 std::string SystemTray::GetIconPath(TrayIconStatus status) const
 {
-    std::string icon_name;
-
-    switch (status)
-    {
-    case TrayIconStatus::Connected:
-        icon_name = "Icon-Connected.png";
-        break;
-    case TrayIconStatus::Connecting:
-        icon_name = "Icon-Connecting.png";
-        break;
-    case TrayIconStatus::Failed:
-        icon_name = "Icon-Failed.png";
-        break;
-    case TrayIconStatus::KillSwitch:
-        icon_name = "Icon-KillSwitch.png";
-        break;
-    case TrayIconStatus::NoInternet:
-        icon_name = "Icon-NoInternet.png";
-        break;
-    case TrayIconStatus::Standby:
-    default:
-        icon_name = "Icon-Standby.png";
-        break;
-    }
-
-    return icon_dir_ + "/" + icon_name;
+    (void)status;
+    return icon_dir_ + "/app_logo_emblem.png";
 }
 
 std::string SystemTray::GetIconName(TrayIconStatus status) const
 {
-    // Return icon name without extension for AppIndicator
-    switch (status)
-    {
-    case TrayIconStatus::Connected:
-        return "Icon-Connected";
-    case TrayIconStatus::Connecting:
-        return "Icon-Connecting";
-    case TrayIconStatus::Failed:
-        return "Icon-Failed";
-    case TrayIconStatus::KillSwitch:
-        return "Icon-KillSwitch";
-    case TrayIconStatus::NoInternet:
-        return "Icon-NoInternet";
-    case TrayIconStatus::Standby:
-    default:
-        return "Icon-Standby";
-    }
+    (void)status;
+    // Use the app's current brand icon in every connection state; status is
+    // communicated through the native menu and tooltip.
+    return "app_logo_emblem";
 }
 
 void SystemTray::OnMenuItemActivated(GtkMenuItem *menu_item, gpointer user_data)
@@ -342,6 +306,13 @@ void SystemTray::UpdateTooltip(const std::string &tooltip)
     app_indicator_set_title(indicator_, tooltip.c_str());
 }
 
+void SystemTray::UpdateStatusTooltip(const std::string &key, const std::string &fallback)
+{
+    tooltip_status_key_ = key;
+    tooltip_status_fallback_ = fallback;
+    UpdateTooltip(Label("appName", "Harmoney") + " - " + Label(key, fallback));
+}
+
 void SystemTray::UpdateIcon(TrayIconStatus status)
 {
     if (!initialized_ || !indicator_)
@@ -383,22 +354,22 @@ void SystemTray::UpdateIcon(TrayIconStatus status)
     }
 }
 
-std::string SystemTray::ConnectionStatusToString(ConnectionStatus status)
+std::string SystemTray::ConnectionStatusToString(ConnectionStatus status) const
 {
     switch (status)
     {
     case ConnectionStatus::Connect:
-        return "Connect";
+        return Label("connect", "Connect");
     case ConnectionStatus::Disconnect:
-        return "Disconnect";
+        return Label("disconnect", "Disconnect");
     case ConnectionStatus::Connecting:
-        return "Connecting ...";
+        return Label("connecting", "Connecting");
     case ConnectionStatus::Disconnecting:
-        return "Disconnecting ...";
+        return Label("disconnecting", "Disconnecting…");
     case ConnectionStatus::Error:
-        return "Error";
+        return Label("error", "Error");
     default:
-        return "Connect";
+        return Label("connect", "Connect");
     }
 }
 
@@ -451,6 +422,24 @@ void SystemTray::SetSystemProxy(bool value)
 void SystemTray::SetVPNMode(bool value)
 {
     vpn_mode_ = value;
+}
+
+std::string SystemTray::Label(const std::string &key, const std::string &fallback) const
+{
+    const auto it = labels_.find(key);
+    return it == labels_.end() || it->second.empty() ? fallback : it->second;
+}
+
+void SystemTray::SetLabels(const std::map<std::string, std::string> &labels)
+{
+    labels_ = labels;
+    if (initialized_ && indicator_)
+    {
+        const std::string title = Label("appName", "Harmoney");
+        app_indicator_set_title(indicator_, title.c_str());
+        UpdateStatusTooltip(tooltip_status_key_, tooltip_status_fallback_);
+        RebuildMenu();
+    }
 }
 
 bool SystemTray::IsVPNDisconnected() const

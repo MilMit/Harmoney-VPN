@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-import '../../../app/app_strings.dart';
+import '../../../l10n/app_localizations.dart';
 import 'widgets/harmoney_nav_item.dart';
 
 class HarmoneyNavBar extends StatelessWidget {
@@ -27,46 +27,56 @@ class HarmoneyNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final lang = Localizations.localeOf(context).languageCode;
-    final strings = AppStrings(lang);
+    final l10n = AppLocalizations.of(context)!;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: 16.h.clamp(10.0, 24.0)),
-        child: Center(
-          heightFactor: 1,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.transparent,
+            const Color(0xFF061A26).withValues(alpha: 0.50),
+            const Color(0xFF04121A).withValues(alpha: 0.95),
+          ],
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: 14.h.clamp(8.0, 20.0)),
+          child: Center(
+            heightFactor: 1,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(26),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      const Color(0xFF133E54).withValues(alpha: 0.72),
-                      const Color(0xFF092332).withValues(alpha: 0.88),
+                      const Color(0xFF0C2434).withValues(alpha: 0.50),
+                      const Color(0xFF051722).withValues(alpha: 0.65),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(26),
                   border: Border.all(
-                    color: const Color(0xFF00D4AA).withValues(alpha: 0.28),
-                    width: 1.2,
+                    color: Colors.white.withValues(alpha: 0.22),
+                    width: 1.0,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF00D4AA).withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      spreadRadius: -1,
-                      offset: const Offset(0, 4),
+                      color: Colors.black.withValues(alpha: 0.40),
+                      blurRadius: 16,
+                      offset: const Offset(0, 10),
                     ),
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.50),
-                      blurRadius: 28,
-                      offset: const Offset(0, 10),
+                      color: const Color(0xFF00E5FF).withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -75,12 +85,11 @@ class HarmoneyNavBar extends StatelessWidget {
                   height: _itemHeight,
                   child: Stack(
                     children: [
-                      // Sliding Active Neon Pill Capsule
-                      AnimatedPositioned(
-                        duration: const Duration(milliseconds: 320),
+                      // Sliding Active Apple Glass Capsule
+                      AnimatedPositionedDirectional(
+                        duration: const Duration(milliseconds: 220),
                         curve: Curves.easeOutBack,
-                        left:
-                            currentIndex.clamp(0, _itemCount - 1) *
+                        start: currentIndex.clamp(0, _itemCount - 1) *
                             (_itemWidth + _spacing),
                         top: 0,
                         width: _itemWidth,
@@ -92,21 +101,21 @@ class HarmoneyNavBar extends StatelessWidget {
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
                               colors: [
-                                const Color(0xFF00D4AA).withValues(alpha: 0.32),
-                                const Color(0xFF00E5FF).withValues(alpha: 0.15),
+                                const Color(0xFF00F5B8).withValues(alpha: 0.26),
+                                const Color(0xFF00E5FF).withValues(alpha: 0.12),
                               ],
                             ),
                             border: Border.all(
-                              color: const Color(0xFF00D4AA)
-                                  .withValues(alpha: 0.8),
-                              width: 1.2,
+                              color: const Color(0xFF00F5B8)
+                                  .withValues(alpha: 0.65),
+                              width: 1.0,
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFF00D4AA)
-                                    .withValues(alpha: 0.35),
-                                blurRadius: 14,
-                                spreadRadius: 0.5,
+                                color: const Color(0xFF00F5B8)
+                                    .withValues(alpha: 0.25),
+                                blurRadius: 12,
+                                spreadRadius: -1,
                                 offset: const Offset(0, 2),
                               ),
                             ],
@@ -115,62 +124,59 @@ class HarmoneyNavBar extends StatelessWidget {
                       ),
 
                       // Interactive Nav Items Row
-                      Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            HarmoneyNavItem(
-                              index: 0,
-                              icon: 'chield',
-                              label: strings.connect,
-                              currentIndex: currentIndex,
-                              onTap: onSelect,
-                              width: _itemWidth,
-                              height: _itemHeight,
-                            ),
-                            const SizedBox(width: _spacing),
-                            HarmoneyNavItem(
-                              index: 1,
-                              icon: 'vpn_cloud',
-                              label: strings.locations,
-                              currentIndex: currentIndex,
-                              onTap: onSelect,
-                              width: _itemWidth,
-                              height: _itemHeight,
-                            ),
-                            const SizedBox(width: _spacing),
-                            HarmoneyNavItem(
-                              index: 2,
-                              icon: 'speed',
-                              label: strings.statistics,
-                              currentIndex: currentIndex,
-                              onTap: onSelect,
-                              width: _itemWidth,
-                              height: _itemHeight,
-                            ),
-                            const SizedBox(width: _spacing),
-                            HarmoneyNavItem(
-                              index: 3,
-                              icon: 'Shield',
-                              label: strings.protection,
-                              currentIndex: currentIndex,
-                              onTap: onSelect,
-                              width: _itemWidth,
-                              height: _itemHeight,
-                            ),
-                            const SizedBox(width: _spacing),
-                            HarmoneyNavItem(
-                              index: 4,
-                              icon: 'settings',
-                              label: strings.settings,
-                              currentIndex: currentIndex,
-                              onTap: onSelect,
-                              width: _itemWidth,
-                              height: _itemHeight,
-                            ),
-                          ],
-                        ),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          HarmoneyNavItem(
+                            index: 0,
+                            icon: 'chield',
+                            label: l10n.appString_Connect,
+                            currentIndex: currentIndex,
+                            onTap: onSelect,
+                            width: _itemWidth,
+                            height: _itemHeight,
+                          ),
+                          const SizedBox(width: _spacing),
+                          HarmoneyNavItem(
+                            index: 1,
+                            icon: 'vpn_cloud',
+                            label: l10n.appString_Locations,
+                            currentIndex: currentIndex,
+                            onTap: onSelect,
+                            width: _itemWidth,
+                            height: _itemHeight,
+                          ),
+                          const SizedBox(width: _spacing),
+                          HarmoneyNavItem(
+                            index: 2,
+                            icon: 'speed',
+                            label: l10n.appString_Statistics,
+                            currentIndex: currentIndex,
+                            onTap: onSelect,
+                            width: _itemWidth,
+                            height: _itemHeight,
+                          ),
+                          const SizedBox(width: _spacing),
+                          HarmoneyNavItem(
+                            index: 3,
+                            icon: 'Shield',
+                            label: l10n.appString_Protection,
+                            currentIndex: currentIndex,
+                            onTap: onSelect,
+                            width: _itemWidth,
+                            height: _itemHeight,
+                          ),
+                          const SizedBox(width: _spacing),
+                          HarmoneyNavItem(
+                            index: 4,
+                            icon: 'settings',
+                            label: l10n.appString_Settings,
+                            currentIndex: currentIndex,
+                            onTap: onSelect,
+                            width: _itemWidth,
+                            height: _itemHeight,
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -180,6 +186,7 @@ class HarmoneyNavBar extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

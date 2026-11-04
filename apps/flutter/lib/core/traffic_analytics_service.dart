@@ -145,6 +145,7 @@ class TrafficAnalyticsService {
 
   Future<void> init() async {
     await _loadPersistedCounters();
+    _emitSnapshot(0, 0);
     startMonitoring();
   }
 
@@ -173,6 +174,14 @@ class TrafficAnalyticsService {
       _sessionTx = 0;
     } else {
       _connectedSince = null;
+    }
+    if (Platform.isAndroid) {
+      if (isConnected) {
+        startMonitoring();
+      } else {
+        stopMonitoring();
+        _emitSnapshot(0, 0);
+      }
     }
   }
 
@@ -267,6 +276,10 @@ class TrafficAnalyticsService {
         _sessionRx = (data['rx_bytes'] as num?)?.toInt() ?? _sessionRx;
         _sessionTx = (data['tx_bytes'] as num?)?.toInt() ?? _sessionTx;
       } else if (Platform.isAndroid) {
+        if (!_vpnConnected) {
+          _emitSnapshot(0, 0);
+          return;
+        }
         final data = await MobileVpnBridge.trafficSnapshot();
         final rawRx = (data['rx_bytes'] as num?)?.toInt() ?? -1;
         final rawTx = (data['tx_bytes'] as num?)?.toInt() ?? -1;
@@ -324,13 +337,11 @@ class TrafficAnalyticsService {
     final dlMbps = (rxBps * 8.0) / (1024 * 1024);
     final ulMbps = (txBps * 8.0) / (1024 * 1024);
 
-    _history.add(
-      TrafficSpeedPoint(
-        timestamp: _historyCursor,
-        downloadMbps: dlMbps,
-        uploadMbps: ulMbps,
-      ),
-    );
+    _history.add(TrafficSpeedPoint(
+      timestamp: _historyCursor,
+      downloadMbps: dlMbps,
+      uploadMbps: ulMbps,
+    ));
     if (_history.length > 30) {
       _history.removeAt(0);
     }

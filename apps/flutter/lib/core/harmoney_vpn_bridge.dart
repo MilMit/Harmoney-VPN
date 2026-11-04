@@ -30,6 +30,20 @@ class HarmoneyBridge {
     _methodChannel.setMethodCallHandler(handler);
   }
 
+  Future<void> updateTrayLabels(Map<String, String> labels) async {
+    try {
+      await _methodChannel.invokeMethod<void>('updateTrayLabels', labels);
+    } on MissingPluginException {
+      // The native tray is only available in the Linux desktop runner.
+    } on PlatformException {
+      // Tray localization must never affect VPN operation.
+    }
+  }
+
+  Future<void> quitApplication() async {
+    await _methodChannel.invokeMethod<void>('quitApplication');
+  }
+
   Stream<String> get progressUpdates {
     if (_progressStream == null) {
       if (Platform.isAndroid || Platform.isIOS) {

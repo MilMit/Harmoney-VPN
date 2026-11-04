@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/linux_platform_controls.dart';
-import '../../core/platform_capability_matrix.dart';
+import '../../core/mobile_vpn_bridge.dart';
 import '../../core/secure_credentials_vault.dart';
 
 import 'package:milmit_vpn_client/app/localized_text.dart';
@@ -334,38 +335,7 @@ class _HotspotPageState extends State<HotspotPage> {
     }
 
     if (!Platform.isLinux) {
-      final platName = PlatformCapabilityMatrix.currentPlatformName();
-      return SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.wifi_tethering_off,
-                  size: 64,
-                  color: Colors.grey,
-                ),
-                const SizedBox(height: 16),
-                LocalizedText(
-                  'Not supported on $platName',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
-                LocalizedText(
-                  PlatformCapabilityMatrix.getCapability(
-                    PlatformFeatureKey.hotspotTethering,
-                  ).reason,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium
-                      ?.copyWith(color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      return _buildMobileHotspotView(context);
     }
 
     final hotspot = _routerData?['hotspot'] as Map? ?? const {};
@@ -1098,6 +1068,480 @@ class _HotspotPageState extends State<HotspotPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildMobileHotspotView(BuildContext context) {
+    final isPersian = Localizations.localeOf(context).languageCode == 'fa';
+    const proxyHost = '192.168.43.1';
+    const httpPort = '10809';
+    const socksPort = '10808';
+    const pacUrl = 'http://$proxyHost:$httpPort/proxy.pac';
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 680),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header Banner
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF00D4AA).withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF00D4AA).withValues(alpha: 0.4),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.wifi_tethering_rounded,
+                        color: Color(0xFF61F2C2),
+                        size: 28,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          LocalizedText(
+                            localizedUiText(
+                                context,
+                                (isPersian
+                                    ? 'پل اشتراک‌گذاری هات‌اسپات (Proxy Bridge)'
+                                    : 'Hotspot Proxy Bridge')),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          LocalizedText(
+                            localizedUiText(
+                                context,
+                                (isPersian
+                                    ? 'توزیع امن فیلترشکن به سایر دستگاه‌ها با بای‌پَس ترافیک داخلی'
+                                    : 'Share VPN connection with phones, laptops & TVs with split routing')),
+                            style: const TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Proxy Details Card
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        const Color(0xFF133E54).withValues(alpha: 0.85),
+                        const Color(0xFF092332).withValues(alpha: 0.92),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFF00D4AA).withValues(alpha: 0.4),
+                      width: 1.2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.router_rounded,
+                              color: Color(0xFF61F2C2), size: 20),
+                          const SizedBox(width: 8),
+                          LocalizedText(
+                            localizedUiText(
+                                context,
+                                (isPersian
+                                    ? 'مشخصات سرور پل در هات‌اسپات'
+                                    : 'Hotspot Proxy Specifications')),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00D4AA)
+                                  .withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: LocalizedText(
+                              localizedUiText(
+                                  context, (isPersian ? 'آماده' : 'Ready')),
+                              style: const TextStyle(
+                                color: Color(0xFF61F2C2),
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildSpecRow(
+                        context,
+                        label: isPersian ? 'آدرس IP هات‌اسپات' : 'Hotspot IP',
+                        value: proxyHost,
+                        icon: Icons.lan_outlined,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildSpecRow(
+                        context,
+                        label: isPersian
+                            ? 'پورت HTTP (پروکسی و PAC)'
+                            : 'HTTP Port',
+                        value: httpPort,
+                        icon: Icons.http_rounded,
+                      ),
+                      const SizedBox(height: 8),
+                      _buildSpecRow(
+                        context,
+                        label: isPersian ? 'پورت SOCKS5' : 'SOCKS5 Port',
+                        value: socksPort,
+                        icon: Icons.compare_arrows_rounded,
+                      ),
+                      const Divider(color: Colors.white12, height: 24),
+                      _buildSpecRow(
+                        context,
+                        label: isPersian
+                            ? 'آدرس تنظیم خودکار (PAC)'
+                            : 'Auto Proxy (PAC URL)',
+                        value: pacUrl,
+                        icon: Icons.auto_mode_rounded,
+                        isPac: true,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Domestic Bypass Badge Card
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0B2E24).withValues(alpha: 0.8),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: const Color(0xFF00E676).withValues(alpha: 0.35),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color:
+                              const Color(0xFF00E676).withValues(alpha: 0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.verified_user_rounded,
+                          color: Color(0xFF69F0AE),
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            LocalizedText(
+                              localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'بای‌پس هوشمند ترافیک داخلی فعال است'
+                                      : 'Smart Domestic Bypass Active')),
+                              style: const TextStyle(
+                                color: Color(0xFF69F0AE),
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            LocalizedText(
+                              localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'دستگاه‌های متصل، سایت‌های بانکی و دامنه‌های ir. را مستقیماً با سرعت کامل اینترنت محلی باز می‌کنند.'
+                                      : 'Connected devices access local banking & .ir domains directly without latency.')),
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 11.5,
+                                height: 1.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Step-by-Step Device Setup
+                LocalizedText(
+                  localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'راهنمای تنظیم در دستگاه‌های متصل'
+                          : 'Connected Devices Setup Guide')),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _buildDeviceGuideCard(
+                  context,
+                  title: isPersian ? 'آیفون و آیپد (iOS)' : 'iPhone & iPad',
+                  icon: Icons.phone_iphone_rounded,
+                  instructions: isPersian
+                      ? '۱. به وای‌فای هات‌اسپات متصل شوید.\n۲. در تنظیمات Wi-Fi روی دکمه (i) شبکه بزنید.\n۳. بخش Configure Proxy را روی Automatic گذاشته و آدرس PAC زیر را ثبت کنید:\n$pacUrl'
+                      : '1. Connect to Wi-Fi.\n2. Tap (i) in Wi-Fi settings.\n3. Set Configure Proxy to Automatic with PAC URL:\n$pacUrl',
+                ),
+                const SizedBox(height: 10),
+                _buildDeviceGuideCard(
+                  context,
+                  title: isPersian
+                      ? 'ویندوز و مک (Windows / macOS)'
+                      : 'Windows & macOS',
+                  icon: Icons.computer_rounded,
+                  instructions: isPersian
+                      ? 'در تنظیمات Proxy سیستم، گزینه Use setup script را روشن کرده و آدرس PAC بالا را وارد کنید؛ یا در بخش Manual Proxy آی‌پی 192.168.43.1 و پورت 10809 را ثبت کنید.'
+                      : 'In System Proxy settings, enable "Use setup script" with PAC URL, or Manual Proxy (192.168.43.1:10809).',
+                ),
+                const SizedBox(height: 10),
+                _buildDeviceGuideCard(
+                  context,
+                  title: isPersian
+                      ? 'تلویزیون هوشمند و کنسول بازی'
+                      : 'Smart TV & Consoles',
+                  icon: Icons.tv_rounded,
+                  instructions: isPersian
+                      ? 'در تنظیمات پیشرفته شبکه (Advanced Network)، پروکسی HTTP را روی 192.168.43.1 و پورت 10809 بگذارید تا یوتیوب و استریم بدون هیچ فیلتر و لگی باز شود.'
+                      : 'Set HTTP Proxy to 192.168.43.1:10809 in Network Advanced Settings for direct streaming.',
+                ),
+                const SizedBox(height: 20),
+
+                // Action Buttons
+                Row(
+                  children: [
+                    if (Platform.isAndroid)
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            try {
+                              await MobileVpnBridge.openTetherSettings();
+                            } catch (_) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: LocalizedText(localizedUiText(
+                                        context,
+                                        (isPersian
+                                            ? 'لطفاً هات‌اسپات را از بخش تنظیمات گوشی روشن کنید.'
+                                            : 'Please open Hotspot settings manually.'))),
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(
+                              color: Colors.white.withValues(alpha: 0.2),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon:
+                              const Icon(Icons.settings_cell_rounded, size: 18),
+                          label: LocalizedText(
+                            localizedUiText(
+                                context,
+                                (isPersian
+                                    ? 'تنظیمات هات‌اسپات'
+                                    : 'Hotspot Settings')),
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ),
+                    if (Platform.isAndroid) const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          Clipboard.setData(
+                              const ClipboardData(text: pacUrl));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: LocalizedText(localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'آدرس PAC با موفقیت کپی شد.'
+                                      : 'PAC URL copied to clipboard.'))),
+                            ),
+                          );
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: const Color(0xFF00D4AA),
+                          foregroundColor: const Color(0xFF07212E),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.copy_rounded, size: 18),
+                        label: LocalizedText(
+                          localizedUiText(
+                              context,
+                              (isPersian ? 'کپی آدرس PAC' : 'Copy PAC URL')),
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSpecRow(
+    BuildContext context, {
+    required String label,
+    required String value,
+    required IconData icon,
+    bool isPac = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: const Color(0xFF61F2C2)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LocalizedText(
+                  label,
+                  style: const TextStyle(color: Colors.white60, fontSize: 11),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isPac ? 12 : 13.5,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.copy_rounded, size: 16, color: Colors.white70),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: value));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: LocalizedText('$label copied'),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            tooltip: 'Copy',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDeviceGuideCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required String instructions,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: const Color(0xFF00E5FF)),
+              const SizedBox(width: 8),
+              LocalizedText(
+                title,
+                style: const TextStyle(
+                  color: Color(0xFF00E5FF),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            instructions,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 11.5,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

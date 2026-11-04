@@ -124,7 +124,10 @@ class ProviderRoutingVpnCore implements VpnCore {
     final effectiveProvider = (server?.providerId.isNotEmpty == true)
         ? server!.providerId
         : providerId;
-    final targetKey = '$effectiveProvider|${server?.id ?? 'automatic'}';
+    // Protocol changes on the same location are new connection requests, not
+    // duplicates of the in-flight handshake (e.g. Surfshark OpenVPN -> IKEv2).
+    final targetKey =
+        '$effectiveProvider|${server?.id ?? 'automatic'}|${protocol.trim().toLowerCase()}';
     final inFlight = _connectInFlight;
     if (inFlight != null) {
       if (_connectTargetKey == targetKey) return inFlight;

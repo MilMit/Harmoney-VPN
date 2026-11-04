@@ -173,10 +173,37 @@ class HarmoneyVpnService : VpnService() {
                     // DXcore has no protect-socket callback. Its own app UID is
                     // excluded, as in upstream, while other apps use the TUN.
                     val builder = Builder().setSession("Harmoney")
-                        .addAddress("10.0.0.2", 32).addRoute("0.0.0.0", 0)
+                        .addAddress("10.0.0.2", 32)
                         .addDnsServer("1.1.1.1").setMtu(1280).setBlocking(true)
                         .addDisallowedApplication(packageName)
                         .setUnderlyingNetworks(arrayOf(physical))
+                    val bypassManager = CountryBypassRuleManager.getInstance(this@HarmoneyVpnService)
+                    val bypassIpv4 = if (bypassManager.hasActiveBypassRoutes()) {
+                        bypassManager.getActiveBypassedIpv4Cidrs()
+                    } else {
+                        emptyList()
+                    }
+                    if (bypassIpv4.isEmpty()) {
+                        builder.addRoute("0.0.0.0", 0)
+                    } else if (Build.VERSION.SDK_INT >= 33) {
+                        builder.addRoute("0.0.0.0", 0)
+                        for (cidr in bypassIpv4) {
+                            val (address, prefixText) = cidr.split('/', limit = 2)
+                            val prefix = prefixText.toIntOrNull()
+                                ?: error("Invalid country-bypass prefix")
+                            builder.excludeRoute(android.net.IpPrefix(
+                                java.net.InetAddress.getByName(address), prefix,
+                            ))
+                        }
+                    } else {
+                        val complement = bypassManager.calculateComplementRoutesIpv4(bypassIpv4)
+                        check(complement.size <= 4096) {
+                            "Too many country-bypass routes for this Android version"
+                        }
+                        for ((address, prefix) in complement) {
+                            builder.addRoute(address, prefix)
+                        }
+                    }
                     val excludedApps = SettingsStore(this@HarmoneyVpnService).excludedApps
                     for (excludedPackage in excludedApps) {
                         runCatching { builder.addDisallowedApplication(excludedPackage) }

@@ -26,10 +26,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   const bool background_refresh =
       std::find(command_line_arguments.begin(), command_line_arguments.end(),
                 "--subscription-refresh") != command_line_arguments.end();
+  const bool start_minimized =
+      std::find(command_line_arguments.begin(), command_line_arguments.end(),
+                "--start-minimized") != command_line_arguments.end();
 
   project.set_dart_entrypoint_arguments(std::move(command_line_arguments));
 
-  FlutterWindow window(project, !background_refresh);
+  FlutterWindow window(project, !background_refresh && !start_minimized,
+                       !background_refresh);
   Win32Window::Point origin(10, 10);
   Win32Window::Size size(1280, 720);
   if (!window.Create(L"milmit_vpn_client", origin, size)) {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 
@@ -7,7 +8,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:milmit_vpn_macos/milmit_vpn_macos.dart';
 
 import '../../app/app_state.dart';
-import '../../app/app_strings.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/firetunnel_vpn_core.dart';
 import '../../core/linux_platform_controls.dart';
@@ -22,6 +22,9 @@ import '../diagnostics/talker_logs_page.dart';
 import '../../shared/services/haptic_service.dart';
 import '../../core/windows_startup_scheduler.dart';
 
+import '../../core/updater/app_update_service.dart';
+import '../../core/updater/app_update_dialog.dart';
+import '../../core/updater/app_update_info.dart';
 import 'package:milmit_vpn_client/app/localized_text.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
@@ -35,6 +38,39 @@ class SettingsPage extends ConsumerStatefulWidget {
 
 class _SettingsPageState extends ConsumerState<SettingsPage>
     with WidgetsBindingObserver {
+  bool _isCheckingUpdate = false;
+  String? _updateStatusMessage;
+
+  Future<void> _checkUpdateNow() async {
+    setState(() {
+      _isCheckingUpdate = true;
+      _updateStatusMessage = null;
+    });
+    try {
+      final info = await AppUpdateService.instance.checkForUpdate(force: true);
+      if (!mounted) return;
+      if (info != null && info.hasUpdate) {
+        AppUpdateDialog.show(context, info);
+      } else {
+        setState(() {
+          _updateStatusMessage = widget.appState.locale.languageCode == 'fa'
+              ? 'شما از آخرین نسخه استفاده می‌کنید'
+              : 'You are on the latest version';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _updateStatusMessage = 'Check failed: $e';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isCheckingUpdate = false);
+      }
+    }
+  }
+
   final _linuxControls = LinuxPlatformControls();
   bool? _credentialsSaved;
   bool _checkingCredentials = false;
@@ -61,7 +97,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
       });
     } else if (Platform.isWindows) {
       WindowsStartupScheduler.isEnabled().then((v) {
-        if (mounted) setState(() => _launchAtStartup = v);
+        if (mounted) {
+          setState(() => _launchAtStartup = v);
+          unawaited(appState.setLaunchOnStartup(v));
+        }
       });
     } else if (Platform.isAndroid) {
       MobileVpnBridge.isAlwaysOnVpnActive().then((v) {
@@ -120,8 +159,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
         await _linuxControls.setLaunchAtStartup(val);
         if (mounted) setState(() => _launchAtStartup = val);
       } else if (Platform.isWindows) {
-        await WindowsStartupScheduler.setEnabled(val);
-        if (mounted) setState(() => _launchAtStartup = val);
+        await WindowsStartupScheduler.setEnabled(
+          val,
+          startMinimized: appState.startMinimized,
+        );
+        if (mounted) {
+          setState(() => _launchAtStartup = val);
+          await appState.setLaunchOnStartup(val);
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -477,7 +522,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 LocalizedText(
-                  isPersian ? 'تنظیمات' : 'Settings',
+                  localizedUiText(
+                      context, (isPersian ? 'تنظیمات' : 'Settings')),
                   style: TextStyle(
                     fontSize: 23.sp.clamp(20, 26),
                     fontWeight: FontWeight.w800,
@@ -487,9 +533,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                 ),
                 SizedBox(height: 3.h),
                 LocalizedText(
-                  isPersian
-                      ? 'مدیریت اتصال، امنیت و شخصی‌سازی'
-                      : 'Manage connection, security, and appearance',
+                  localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'مدیریت اتصال، امنیت و شخصی‌سازی'
+                          : 'Manage connection, security, and appearance')),
                   style: TextStyle(
                     fontSize: 12.sp.clamp(11, 14),
                     color: Colors.white60,
@@ -808,7 +856,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   @override
   Widget build(BuildContext context) {
-    final strings = AppStrings(appState.locale.languageCode);
+    final l10n = AppLocalizations.of(context)!;
     final isPersian = appState.locale.languageCode == 'fa';
     final theme = Theme.of(context);
     final connState = ref.watch(connectionStateProvider);
@@ -837,12 +885,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   _ModernSettingsGroup(
                     icon: Icons.hub_outlined,
                     iconColor: const Color(0xFF08D9B5),
-                    title: isPersian
-                        ? 'اتصال و شبکه'
-                        : 'Connection & network',
-                    subtitle: isPersian
-                        ? 'سرویس VPN موردنظر را انتخاب کنید'
-                        : 'Choose the VPN service for your connection',
+                    title: localizedUiText(context,
+                        (isPersian ? 'اتصال و شبکه' : 'Connection & network')),
+                    subtitle: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'سرویس VPN موردنظر را انتخاب کنید'
+                            : 'Choose the VPN service for your connection')),
                     children: [
                       Padding(
                         padding: EdgeInsetsDirectional.fromSTEB(
@@ -856,16 +905,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ],
                   ),
                   sectionGap,
-                  _buildAccountHeroCard(context, strings),
+                  _buildAccountHeroCard(context, l10n),
                   sectionGap,
                   _ModernSettingsGroup(
                     icon: Icons.alt_route_rounded,
                     iconColor: const Color(0xFF08D9B5),
-                    title:
-                        isPersian ? 'پروتکل اتصال' : 'VPN protocol',
-                    subtitle: isPersian
-                        ? 'پروتکل‌های موجود برای سرویس انتخاب‌شده'
-                        : 'Available options for this service',
+                    title: localizedUiText(
+                        context, (isPersian ? 'پروتکل اتصال' : 'VPN protocol')),
+                    subtitle: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'پروتکل‌های موجود برای سرویس انتخاب‌شده'
+                            : 'Available options for this service')),
                     children: [
                       Padding(
                         padding: EdgeInsets.all(14.w),
@@ -883,22 +934,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   _ModernSettingsGroup(
                     icon: Icons.shield_outlined,
                     iconColor: const Color(0xFF08D9B5),
-                    title: isPersian
-                        ? 'امنیت و حریم خصوصی'
-                        : 'Privacy & security',
-                    subtitle: isPersian
-                        ? 'محافظت‌های شبکه برای این دستگاه'
-                        : 'Network protections configured for this device',
+                    title: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'امنیت و حریم خصوصی'
+                            : 'Privacy & security')),
+                    subtitle: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'محافظت‌های شبکه برای این دستگاه'
+                            : 'Network protections configured for this device')),
                     children: [
                       _ModernSwitchTile(
                         icon: Icons.power_settings_new_rounded,
                         iconColor: const Color(0xFFF27777),
                         title: isPersian
                             ? 'کلید قطع اضطراری'
-                            : strings.killSwitch,
+                            : l10n.appString_KillSwitch,
                         subtitle: isPersian
                             ? 'جلوگیری از ترافیک خارج از تونل هنگام قطع VPN'
-                            : strings.killSwitchSubtitle,
+                            : l10n.appString_KillSwitchSubtitle,
                         value: appState.killSwitch,
                         onChanged: _setKillSwitch,
                       ),
@@ -912,10 +967,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                         iconColor: const Color(0xFF69B8EE),
                         title: isPersian
                             ? 'محافظت در برابر نشت DNS'
-                            : strings.dnsLeakProtection,
-                        subtitle: isPersian
-                            ? 'هدایت درخواست‌های DNS از مسیر تونل VPN'
-                            : 'Routes DNS requests through the VPN tunnel',
+                            : l10n.appString_DnsLeakProtection,
+                        subtitle: localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'هدایت درخواست‌های DNS از مسیر تونل VPN'
+                                : 'Routes DNS requests through the VPN tunnel')),
                         value: appState.dnsProtection,
                         onChanged: _setDnsProtection,
                       ),
@@ -929,10 +986,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                         iconColor: const Color(0xFFB49AFF),
                         title: isPersian
                             ? 'محافظت در برابر نشت IPv6'
-                            : strings.ipv6LeakProtection,
-                        subtitle: isPersian
-                            ? 'جلوگیری از عبور ترافیک IPv6 خارج از تونل'
-                            : 'Prevents unrouted IPv6 traffic from bypassing the tunnel',
+                            : l10n.appString_Ipv6LeakProtection,
+                        subtitle: localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'جلوگیری از عبور ترافیک IPv6 خارج از تونل'
+                                : 'Prevents unrouted IPv6 traffic from bypassing the tunnel')),
                         value: appState.ipv6Protection,
                         onChanged: _setIpv6Protection,
                       ),
@@ -945,16 +1004,18 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                         _settingsActionTile(
                           icon: Icons.restart_alt_rounded,
                           color: const Color(0xFFF2B95C),
-                          title: isPersian
-                              ? 'بازیابی شبکه'
-                              : 'Restore network',
-                          subtitle: isPersian
-                              ? 'بازیابی مسیرها و قوانین ترافیک در صورت اختلال شبکه'
-                              : 'Restore routes and traffic rules if the network is stuck',
+                          title: localizedUiText(context,
+                              (isPersian ? 'بازیابی شبکه' : 'Restore network')),
+                          subtitle: localizedUiText(
+                              context,
+                              (isPersian
+                                  ? 'بازیابی مسیرها و قوانین ترافیک در صورت اختلال شبکه'
+                                  : 'Restore routes and traffic rules if the network is stuck')),
                           action: OutlinedButton(
                             onPressed: _unjamNetwork,
                             child: LocalizedText(
-                              isPersian ? 'بازگردانی' : 'Restore',
+                              localizedUiText(context,
+                                  (isPersian ? 'بازگردانی' : 'Restore')),
                             ),
                           ),
                         ),
@@ -965,22 +1026,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   _ModernSettingsGroup(
                     icon: Icons.autorenew_rounded,
                     iconColor: const Color(0xFF08D9B5),
-                    title: isPersian
-                        ? 'خودکارسازی و پروفایل‌ها'
-                        : 'Automation & profiles',
-                    subtitle: isPersian
-                        ? 'رفتار اتصال هنگام راه‌اندازی و پیکربندی‌های واردشده'
-                        : 'Startup behavior and imported VPN configurations',
+                    title: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'خودکارسازی و پروفایل‌ها'
+                            : 'Automation & profiles')),
+                    subtitle: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'رفتار اتصال هنگام راه‌اندازی و پیکربندی‌های واردشده'
+                            : 'Startup behavior and imported VPN configurations')),
                     children: [
                       _ModernSwitchTile(
                         icon: Icons.flash_on_rounded,
                         iconColor: const Color(0xFFF2B95C),
                         title: isPersian
                             ? 'اتصال خودکار'
-                            : strings.autoConnect,
+                            : l10n.appString_AutoConnect,
                         subtitle: isPersian
                             ? 'پس از اجرای برنامه به VPN متصل شوید'
-                            : strings.autoConnectSubtitle,
+                            : l10n.appString_AutoConnectSubtitle,
                         value: appState.autoConnect,
                         onChanged: _setAutoConnect,
                       ),
@@ -993,12 +1058,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                         _ModernSwitchTile(
                           icon: Icons.power_settings_new_rounded,
                           iconColor: const Color(0xFF08D9B5),
-                          title: isPersian
-                              ? 'اجرا هنگام ورود به سیستم'
-                              : 'Launch at system startup',
-                          subtitle: isPersian
-                              ? 'اجرای Harmoney پس از ورود به سیستم'
-                              : 'Start Harmoney when you sign in',
+                          title: localizedUiText(
+                              context,
+                              (isPersian
+                                  ? 'اجرا هنگام ورود به سیستم'
+                                  : 'Launch at system startup')),
+                          subtitle: localizedUiText(
+                              context,
+                              (isPersian
+                                  ? 'اجرای Harmoney پس از ورود به سیستم'
+                                  : 'Start Harmoney when you sign in')),
                           value: _launchAtStartup,
                           onChanged: _setLaunchAtStartup,
                         ),
@@ -1012,16 +1081,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                         _ModernSwitchTile(
                           icon: Icons.shield_moon_outlined,
                           iconColor: const Color(0xFFB49AFF),
-                          title: isPersian
-                              ? 'VPN همیشه‌روشن'
-                              : 'Always-on VPN',
+                          title: localizedUiText(context,
+                              (isPersian ? 'VPN همیشه‌روشن' : 'Always-on VPN')),
                           subtitle: Platform.isLinux
-                              ? (isPersian
-                                  ? 'اتصال مجدد خودکار با ناظر سیستم'
-                                  : 'Reconnect through the system watchdog')
-                              : (isPersian
-                                  ? 'بازکردن تنظیمات VPN اندروید برای پیکربندی اتصال همیشه‌روشن'
-                                  : 'Opens Android VPN settings to configure Always-on'),
+                              ? (localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'اتصال مجدد خودکار با ناظر سیستم'
+                                      : 'Reconnect through the system watchdog')))
+                              : (localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'بازکردن تنظیمات VPN اندروید برای پیکربندی اتصال همیشه‌روشن'
+                                      : 'Opens Android VPN settings to configure Always-on'))),
                           value: _alwaysOnVpn,
                           badge: Platform.isLinux ? 'systemd' : 'Android',
                           onChanged: _setAlwaysOnVpn,
@@ -1033,10 +1105,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   _ModernSettingsGroup(
                     icon: Icons.palette_outlined,
                     iconColor: const Color(0xFFDE9DCE),
-                    title: isPersian ? 'شخصی‌سازی' : 'Appearance',
-                    subtitle: isPersian
-                        ? 'انتخاب پوسته و زبان برنامه'
-                        : 'Choose the app theme and language',
+                    title: localizedUiText(
+                        context, (isPersian ? 'شخصی‌سازی' : 'Appearance')),
+                    subtitle: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'انتخاب پوسته و زبان برنامه'
+                            : 'Choose the app theme and language')),
                     children: [
                       Padding(
                         padding: EdgeInsets.all(16.w),
@@ -1044,7 +1119,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             LocalizedText(
-                              isPersian ? 'پوسته' : 'Theme',
+                              localizedUiText(
+                                  context, (isPersian ? 'پوسته' : 'Theme')),
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
@@ -1056,17 +1132,17 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                               items: [
                                 (
                                   value: ThemeMode.system,
-                                  label: strings.system,
+                                  label: l10n.appString_System,
                                   icon: Icons.brightness_auto_outlined,
                                 ),
                                 (
                                   value: ThemeMode.light,
-                                  label: strings.light,
+                                  label: l10n.appString_Light,
                                   icon: Icons.light_mode_outlined,
                                 ),
                                 (
                                   value: ThemeMode.dark,
-                                  label: strings.dark,
+                                  label: l10n.appString_Dark,
                                   icon: Icons.dark_mode_outlined,
                                 ),
                               ],
@@ -1080,9 +1156,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                             ),
                             SizedBox(height: 14.h),
                             LocalizedText(
-                              isPersian
-                                  ? 'زبان برنامه'
-                                  : 'App language',
+                              localizedUiText(context,
+                                  (isPersian ? 'زبان برنامه' : 'App language')),
                               style: TextStyle(
                                 fontSize: 14.sp,
                                 fontWeight: FontWeight.w700,
@@ -1104,20 +1179,24 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   _ModernSettingsGroup(
                     icon: Icons.monitor_heart_outlined,
                     iconColor: const Color(0xFF08D9B5),
-                    title: isPersian ? 'عیب‌یابی' : 'Diagnostics',
-                    subtitle: isPersian
-                        ? 'رویدادهای اتصال، خطاهای شبکه و گزارش‌های فنی'
-                        : 'Connection events, network errors, and technical logs',
+                    title: localizedUiText(
+                        context, (isPersian ? 'عیب‌یابی' : 'Diagnostics')),
+                    subtitle: localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'رویدادهای اتصال، خطاهای شبکه و گزارش‌های فنی'
+                            : 'Connection events, network errors, and technical logs')),
                     children: [
                       _settingsActionTile(
                         icon: Icons.terminal_rounded,
                         color: const Color(0xFF08D9B5),
-                        title: isPersian
-                            ? 'گزارش‌های فنی'
-                            : 'Technical logs',
-                        subtitle: isPersian
-                            ? 'مشاهده و فیلتر گزارش‌های برنامه'
-                            : 'View and filter application logs',
+                        title: localizedUiText(context,
+                            (isPersian ? 'گزارش‌های فنی' : 'Technical logs')),
+                        subtitle: localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'مشاهده و فیلتر گزارش‌های برنامه'
+                                : 'View and filter application logs')),
                         action: FilledButton.tonal(
                           onPressed: () => Navigator.push(
                             context,
@@ -1125,14 +1204,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                               builder: (_) => const TalkerLogsPage(),
                             ),
                           ),
-                          child: LocalizedText(
-                              isPersian ? 'مشاهده' : 'Open'),
+                          child: LocalizedText(localizedUiText(
+                              context, (isPersian ? 'مشاهده' : 'Open'))),
                         ),
                       ),
                     ],
                   ),
                   sectionGap,
-                  _buildAboutCard(context, strings, theme),
+                  _buildAboutCard(context, l10n, theme),
                   SizedBox(height: 18.h),
                 ],
               ),
@@ -1143,19 +1222,28 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     );
   }
 
-  Widget _buildAccountHeroCard(BuildContext context, AppStrings strings) {
+  Widget _buildAccountHeroCard(BuildContext context, AppLocalizations l10n) {
     final isHarmoney = appState.provider == 'harmoney';
     final isFirefox = appState.provider == FireTunnelVpnCore.providerId;
+    final Widget card;
     if (isHarmoney) {
-      return _buildHarmoneyAccountCard(context, strings);
+      card = _buildHarmoneyAccountCard(context, l10n);
+    } else if (isFirefox) {
+      card = _buildFirefoxAccountHeroCard(context, l10n);
+    } else {
+      card = _buildHarmoneyAccountCard(context, l10n);
     }
-    if (isFirefox) {
-      return _buildFirefoxAccountHeroCard(context, strings);
-    }
-    return _buildHarmoneyAccountCard(context, strings);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20.r),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: card,
+      ),
+    );
   }
 
-  Widget _buildHarmoneyAccountCard(BuildContext context, AppStrings strings) {
+  Widget _buildHarmoneyAccountCard(
+      BuildContext context, AppLocalizations l10n) {
     final isPersian = widget.appState.locale.languageCode == 'fa';
     final connection = ref.watch(connectionStateProvider).asData?.value;
     final connected =
@@ -1197,9 +1285,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   runSpacing: 6,
                   children: [
                     LocalizedText(
-                      isPersian
-                          ? 'هستهٔ هارمونی'
-                          : 'Harmoney Anti-Censorship Core',
+                      localizedUiText(
+                          context,
+                          (isPersian
+                              ? 'هستهٔ هارمونی'
+                              : 'Harmoney Anti-Censorship Core')),
                       style: TextStyle(
                         fontFamily: 'Lato',
                         fontWeight: FontWeight.w700,
@@ -1223,8 +1313,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                       ),
                       child: LocalizedText(
                         connected
-                            ? (isPersian ? 'متصل' : 'CONNECTED')
-                            : (isPersian ? 'قطع' : 'DISCONNECTED'),
+                            ? (localizedUiText(
+                                context, (isPersian ? 'متصل' : 'CONNECTED')))
+                            : (localizedUiText(
+                                context, (isPersian ? 'قطع' : 'DISCONNECTED'))),
                         style: TextStyle(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.w800,
@@ -1237,9 +1329,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                 ),
                 SizedBox(height: 4.h),
                 LocalizedText(
-                  isPersian
-                      ? 'انتخاب مسیر از کانفیگ‌های Xray، WARP و MASQUE؛ اتصال پس از تأیید عبور ترافیک نمایش داده می‌شود.'
-                      : 'Routes from Xray, WARP and MASQUE configurations. Connection is shown after traffic verification.',
+                  localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'انتخاب مسیر از کانفیگ‌های Xray، WARP و MASQUE؛ اتصال پس از تأیید عبور ترافیک نمایش داده می‌شود.'
+                          : 'Routes from Xray, WARP and MASQUE configurations. Connection is shown after traffic verification.')),
                   style: TextStyle(
                     fontFamily: 'SF Pro',
                     fontSize: 12.sp,
@@ -1388,7 +1482,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   Future<void> _showFirefoxAccountManagementModal(
     BuildContext context,
-    AppStrings strings,
+    AppLocalizations l10n,
   ) async {
     final isPersian = widget.appState.locale.languageCode == 'fa';
     final quotaData = _getFirefoxQuotaData(isPersian);
@@ -1440,9 +1534,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           LocalizedText(
-                            isPersian
-                                ? 'مدیریت حساب Firefox VPN'
-                                : 'Manage Firefox VPN Account',
+                            localizedUiText(
+                                context,
+                                (isPersian
+                                    ? 'مدیریت حساب Firefox VPN'
+                                    : 'Manage Firefox VPN Account')),
                             style: TextStyle(
                               fontFamily: 'Lato',
                               fontSize: 16.sp,
@@ -1482,9 +1578,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LocalizedText(
-                          isPersian
-                              ? 'باقیمانده ترافیک:'
-                              : 'Remaining traffic:',
+                          localizedUiText(
+                              context,
+                              (isPersian
+                                  ? 'باقیمانده ترافیک:'
+                                  : 'Remaining traffic:')),
                           style: TextStyle(
                             fontSize: 12.sp,
                             color: Colors.grey[300],
@@ -1492,9 +1590,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                           ),
                         ),
                         LocalizedText(
-                          isPersian
-                              ? '${_formatGiB(quotaData.remainingBytes, true)} از ${_formatGiB(quotaData.limitBytes, true)} گیبی‌بایت'
-                              : '${_formatGiB(quotaData.remainingBytes, false)} of ${_formatGiB(quotaData.limitBytes, false)} GiB',
+                          localizedUiText(
+                              context,
+                              (isPersian
+                                  ? '${_formatGiB(quotaData.remainingBytes, true)} از ${_formatGiB(quotaData.limitBytes, true)} گیبی‌بایت'
+                                  : '${_formatGiB(quotaData.remainingBytes, false)} of ${_formatGiB(quotaData.limitBytes, false)} GiB')),
                           style: TextStyle(
                             fontSize: 13.sp,
                             fontWeight: FontWeight.bold,
@@ -1521,9 +1621,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                   ),
                   title: LocalizedText(
-                    isPersian
-                        ? 'تازه‌سازی وضعیت و سهمیه'
-                        : 'Refresh status & quota',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'تازه‌سازی وضعیت و سهمیه'
+                            : 'Refresh status & quota')),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -1531,9 +1633,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                   ),
                   subtitle: LocalizedText(
-                    isPersian
-                        ? 'بررسی آخرین وضعیت نشست و باقیمانده حجم'
-                        : 'Query latest session and traffic quota',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'بررسی آخرین وضعیت نشست و باقیمانده حجم'
+                            : 'Query latest session and traffic quota')),
                     style: TextStyle(fontSize: 11.sp, color: Colors.grey[400]),
                   ),
                   onTap: () {
@@ -1555,9 +1659,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                   ),
                   title: LocalizedText(
-                    isPersian
-                        ? 'ورود مجدد به حساب'
-                        : 'Re-login to account',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'ورود مجدد به حساب'
+                            : 'Re-login to account')),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -1565,9 +1671,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                   ),
                   subtitle: LocalizedText(
-                    isPersian
-                        ? 'تمدید توکن نشست یا ورود با حساب دیگر'
-                        : 'Renew session tokens or switch account',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'تمدید توکن نشست یا ورود با حساب دیگر'
+                            : 'Renew session tokens or switch account')),
                     style: TextStyle(fontSize: 11.sp, color: Colors.grey[400]),
                   ),
                   onTap: () {
@@ -1589,7 +1697,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                   ),
                   title: LocalizedText(
-                    isPersian ? 'خروج از حساب' : 'Logout',
+                    localizedUiText(
+                        context, (isPersian ? 'خروج از حساب' : 'Logout')),
                     style: TextStyle(
                       fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
@@ -1597,9 +1706,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                   ),
                   subtitle: LocalizedText(
-                    isPersian
-                        ? 'حذف مشخصات ذخیره‌شده از دستگاه'
-                        : 'Clear stored credentials from this device',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'حذف مشخصات ذخیره‌شده از دستگاه'
+                            : 'Clear stored credentials from this device')),
                     style: TextStyle(fontSize: 11.sp, color: Colors.grey[400]),
                   ),
                   onTap: () {
@@ -1618,7 +1729,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   Widget _buildFirefoxAccountHeroCard(
     BuildContext context,
-    AppStrings strings,
+    AppLocalizations l10n,
   ) {
     final isPersian = widget.appState.locale.languageCode == 'fa';
     final reduceMotion =
@@ -1702,9 +1813,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                               ),
                             ),
                             LocalizedText(
-                              isPersian
-                                  ? 'حساب Firefox VPN'
-                                  : 'Firefox VPN Account',
+                              localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'حساب Firefox VPN'
+                                      : 'Firefox VPN Account')),
                               style: TextStyle(
                                 fontFamily: 'Lato',
                                 fontWeight: FontWeight.w700,
@@ -1728,7 +1841,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                       SizedBox(width: 8.w),
                       _buildFirefoxMoreMenu(
                         context,
-                        strings,
+                        l10n,
                         isPersian,
                         isSaved,
                       ),
@@ -1769,7 +1882,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   ),
                   _buildFirefoxActionsSection(
                     context: context,
-                    strings: strings,
+                    l10n: l10n,
                     isPersian: isPersian,
                     isSaved: isSaved,
                     isSessionExpired: isSessionExpired,
@@ -1813,7 +1926,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             ),
             SizedBox(width: 5.w),
             LocalizedText(
-              isPersian ? 'در حال بررسی…' : 'Checking…',
+              localizedUiText(
+                  context, (isPersian ? 'در حال بررسی…' : 'Checking…')),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w700,
@@ -1844,7 +1958,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             Icon(Icons.warning_amber_rounded, size: 11.sp, color: Colors.amber),
             SizedBox(width: 4.w),
             LocalizedText(
-              isPersian ? 'نشست منقضی شده' : 'Session Expired',
+              localizedUiText(
+                  context, (isPersian ? 'نشست منقضی شده' : 'Session Expired')),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w800,
@@ -1879,7 +1994,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             ),
             SizedBox(width: 4.w),
             LocalizedText(
-              isPersian ? 'وارد شده' : 'Logged In',
+              localizedUiText(context, (isPersian ? 'وارد شده' : 'Logged In')),
               style: TextStyle(
                 fontSize: 10.sp,
                 fontWeight: FontWeight.w800,
@@ -1909,7 +2024,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           Icon(Icons.lock_open_rounded, size: 11.sp, color: Colors.grey[400]),
           SizedBox(width: 4.w),
           LocalizedText(
-            isPersian ? 'نیاز به ورود' : 'Login Required',
+            localizedUiText(
+                context, (isPersian ? 'نیاز به ورود' : 'Login Required')),
             style: TextStyle(
               fontSize: 10.sp,
               fontWeight: FontWeight.w700,
@@ -1942,9 +2058,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           SizedBox(width: 10.w),
           Expanded(
             child: LocalizedText(
-              isPersian
-                  ? 'در حال بررسی حساب…'
-                  : 'Checking account…',
+              localizedUiText(context,
+                  (isPersian ? 'در حال بررسی حساب…' : 'Checking account…')),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: Colors.grey[300],
@@ -1968,9 +2083,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           SizedBox(width: 8.w),
           Expanded(
             child: LocalizedText(
-              isPersian
-                  ? 'نشست امنیتی منقضی شده است؛ برای استفاده از سرورها مجدداً وارد شوید.'
-                  : 'Security session expired; please sign in again to use servers.',
+              localizedUiText(
+                  context,
+                  (isPersian
+                      ? 'نشست امنیتی منقضی شده است؛ برای استفاده از سرورها مجدداً وارد شوید.'
+                      : 'Security session expired; please sign in again to use servers.')),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: const Color(0xFFFFB74D),
@@ -1990,9 +2107,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           SizedBox(width: 8.w),
           Expanded(
             child: LocalizedText(
-              isPersian
-                  ? 'برای فعال‌سازی تونل Firefox و دسترسی به سهمیه، وارد حساب شوید.'
-                  : 'Sign in to activate Firefox tunnel and view data quota.',
+              localizedUiText(
+                  context,
+                  (isPersian
+                      ? 'برای فعال‌سازی تونل Firefox و دسترسی به سهمیه، وارد حساب شوید.'
+                      : 'Sign in to activate Firefox tunnel and view data quota.')),
               style: TextStyle(
                 fontSize: 12.sp,
                 color: Colors.grey[400],
@@ -2043,12 +2162,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ? 'تونل VPN فعال و متصل است${connState?.server?.city != null ? ' (${connState!.server!.city})' : ''}'
                     : 'VPN tunnel is active & connected${connState?.server?.city != null ? ' (${connState!.server!.city})' : ''}')
                 : isConnecting
-                    ? (isPersian
-                        ? 'در حال برقراری اتصال تونل…'
-                        : 'Establishing secure tunnel…')
-                    : (isPersian
-                        ? 'تونل VPN غیرفعال است · آماده اتصال'
-                        : 'VPN tunnel inactive · Ready to connect'),
+                    ? (localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'در حال برقراری اتصال تونل…'
+                            : 'Establishing secure tunnel…')))
+                    : (localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'تونل VPN غیرفعال است · آماده اتصال'
+                            : 'VPN tunnel inactive · Ready to connect'))),
             style: TextStyle(
               fontSize: 12.sp,
               color: isConnected ? const Color(0xFF00D4AA) : Colors.grey[300],
@@ -2073,7 +2196,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     required bool reduceMotion,
   }) {
     return Semantics(
-      label: isPersian ? 'سهمیه ترافیک' : 'Traffic Quota',
+      label: localizedUiText(
+          context, (isPersian ? 'سهمیه ترافیک' : 'Traffic Quota')),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2093,9 +2217,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   ),
                   SizedBox(width: 6.w),
                   LocalizedText(
-                    isPersian
-                        ? 'سهمیه ترافیک ماهانه'
-                        : 'Monthly Allowance',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'سهمیه ترافیک ماهانه'
+                            : 'Monthly Allowance')),
                     style: TextStyle(
                       fontFamily: 'Lato',
                       fontSize: 13.sp,
@@ -2107,9 +2233,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
               ),
               if (quotaData.resetDateString != null)
                 LocalizedText(
-                  isPersian
-                      ? 'بازنشانی: ${quotaData.resetDateString}'
-                      : 'Resets: ${quotaData.resetDateString}',
+                  localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'بازنشانی: ${quotaData.resetDateString}'
+                          : 'Resets: ${quotaData.resetDateString}')),
                   style: TextStyle(
                     fontSize: 11.sp,
                     color: Colors.grey[400],
@@ -2130,9 +2258,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                 SizedBox(width: 6.w),
                 Expanded(
                   child: LocalizedText(
-                    isPersian
-                        ? 'اطلاعات حجم در دسترس نیست'
-                        : 'Quota information unavailable',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'اطلاعات حجم در دسترس نیست'
+                            : 'Quota information unavailable')),
                     style: TextStyle(
                       fontFamily: isPersian ? null : 'SF Pro',
                       fontSize: 12.sp,
@@ -2144,7 +2274,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             )
           else if (quotaData.unlimited) ...[
             LocalizedText(
-              isPersian ? 'سهمیه نامحدود' : 'Unlimited quota',
+              localizedUiText(
+                  context, (isPersian ? 'سهمیه نامحدود' : 'Unlimited quota')),
               style: TextStyle(
                 fontFamily: isPersian ? null : 'Lato',
                 fontSize: 14.sp,
@@ -2181,7 +2312,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
   ) {
     final remStr = _formatGiB(remaining, isPersian);
     final limStr = _formatGiB(limit, isPersian);
-    final unit = isPersian ? 'گیبی‌بایت' : 'GiB';
+    final unit = localizedUiText(context, (isPersian ? 'گیبی‌بایت' : 'GiB'));
 
     return Text.rich(
       TextSpan(
@@ -2196,7 +2327,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             ),
           ),
           TextSpan(
-            text: localizedUiText(context, isPersian ? ' از ' : ' of '),
+            text: localizedUiText(context,
+                localizedUiText(context, (isPersian ? ' از ' : ' of '))),
             style: TextStyle(
               fontSize: 13.sp,
               fontWeight: FontWeight.w400,
@@ -2216,7 +2348,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           TextSpan(
             text: localizedUiText(
               context,
-              isPersian ? 'باقیمانده' : 'remaining',
+              localizedUiText(context, (isPersian ? 'باقیمانده' : 'remaining')),
             ),
             style: TextStyle(
               fontSize: 13.sp,
@@ -2278,7 +2410,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   Widget _buildFirefoxActionsSection({
     required BuildContext context,
-    required AppStrings strings,
+    required AppLocalizations l10n,
     required bool isPersian,
     required bool isSaved,
     required bool isSessionExpired,
@@ -2310,7 +2442,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   )
                 : Icon(Icons.login_rounded, size: 16.sp),
             label: LocalizedText(
-              isPersian ? 'ورود به حساب' : 'Log in to account',
+              localizedUiText(
+                  context, (isPersian ? 'ورود به حساب' : 'Log in to account')),
               style: TextStyle(
                 fontFamily: 'Lato',
                 fontWeight: FontWeight.w700,
@@ -2349,7 +2482,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                   )
                 : Icon(Icons.refresh_rounded, size: 16.sp),
             label: LocalizedText(
-              isPersian ? 'ورود مجدد' : 'Re-login',
+              localizedUiText(context, (isPersian ? 'ورود مجدد' : 'Re-login')),
               style: TextStyle(
                 fontFamily: 'Lato',
                 fontWeight: FontWeight.w700,
@@ -2369,7 +2502,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
             ),
             icon: Icon(Icons.logout_rounded, size: 15.sp),
             label: LocalizedText(
-              isPersian ? 'خروج از حساب' : 'Logout',
+              localizedUiText(context, (isPersian ? 'خروج از حساب' : 'Logout')),
               style: TextStyle(fontFamily: 'Lato', fontSize: 12.sp),
             ),
           ),
@@ -2386,7 +2519,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
         FilledButton.tonalIcon(
           onPressed: _isAccountActionBusy
               ? null
-              : () => _showFirefoxAccountManagementModal(context, strings),
+              : () => _showFirefoxAccountManagementModal(context, l10n),
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFF00D4AA).withValues(alpha: 0.16),
             foregroundColor: const Color(0xFF00D4AA),
@@ -2400,7 +2533,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           ),
           icon: Icon(Icons.tune_rounded, size: 16.sp),
           label: LocalizedText(
-            isPersian ? 'مدیریت حساب' : 'Manage Account',
+            localizedUiText(
+                context, (isPersian ? 'مدیریت حساب' : 'Manage Account')),
             style: TextStyle(
               fontFamily: 'Lato',
               fontWeight: FontWeight.w700,
@@ -2420,7 +2554,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           ),
           icon: Icon(Icons.sync_rounded, size: 15.sp),
           label: LocalizedText(
-            isPersian ? 'ورود مجدد' : 'Re-login',
+            localizedUiText(context, (isPersian ? 'ورود مجدد' : 'Re-login')),
             style: TextStyle(fontFamily: 'Lato', fontSize: 12.sp),
           ),
         ),
@@ -2436,7 +2570,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           ),
           icon: Icon(Icons.logout_rounded, size: 15.sp),
           label: LocalizedText(
-            isPersian ? 'خروج' : 'Logout',
+            localizedUiText(context, (isPersian ? 'خروج' : 'Logout')),
             style: TextStyle(fontFamily: 'Lato', fontSize: 12.sp),
           ),
         ),
@@ -2458,7 +2592,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   Widget _buildFirefoxMoreMenu(
     BuildContext context,
-    AppStrings strings,
+    AppLocalizations l10n,
     bool isPersian,
     bool isSaved,
   ) {
@@ -2481,7 +2615,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
           if (_isAccountActionBusy) return;
           switch (val) {
             case 'manage':
-              _showFirefoxAccountManagementModal(context, strings);
+              _showFirefoxAccountManagementModal(context, l10n);
               break;
             case 'refresh':
               _handleRefreshCredentials();
@@ -2510,8 +2644,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                       color: Color(0xFF00D4AA),
                     ),
                     const SizedBox(width: 10),
-                    LocalizedText(
-                        isPersian ? 'مدیریت حساب' : 'Manage Account'),
+                    LocalizedText(localizedUiText(context,
+                        (isPersian ? 'مدیریت حساب' : 'Manage Account'))),
                   ],
                 ),
               ),
@@ -2526,9 +2660,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                     const SizedBox(width: 10),
                     LocalizedText(
-                      isPersian
-                          ? 'تازه‌سازی وضعیت'
-                          : 'Refresh Status',
+                      localizedUiText(context,
+                          (isPersian ? 'تازه‌سازی وضعیت' : 'Refresh Status')),
                     ),
                   ],
                 ),
@@ -2543,7 +2676,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                       color: Colors.white70,
                     ),
                     const SizedBox(width: 10),
-                    LocalizedText(isPersian ? 'ورود مجدد' : 'Re-login'),
+                    LocalizedText(localizedUiText(
+                        context, (isPersian ? 'ورود مجدد' : 'Re-login'))),
                   ],
                 ),
               ),
@@ -2558,7 +2692,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                     ),
                     const SizedBox(width: 10),
                     LocalizedText(
-                      isPersian ? 'خروج از حساب' : 'Logout',
+                      localizedUiText(
+                          context, (isPersian ? 'خروج از حساب' : 'Logout')),
                       style: const TextStyle(color: Colors.redAccent),
                     ),
                   ],
@@ -2577,8 +2712,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                       color: Color(0xFF00D4AA),
                     ),
                     const SizedBox(width: 10),
-                    LocalizedText(
-                        isPersian ? 'ورود به حساب' : 'Sign In'),
+                    LocalizedText(localizedUiText(
+                        context, (isPersian ? 'ورود به حساب' : 'Sign In'))),
                   ],
                 ),
               ),
@@ -2592,8 +2727,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
                       color: Colors.white70,
                     ),
                     const SizedBox(width: 10),
-                    LocalizedText(
-                        isPersian ? 'بررسی مجدد' : 'Check status'),
+                    LocalizedText(localizedUiText(
+                        context, (isPersian ? 'بررسی مجدد' : 'Check status'))),
                   ],
                 ),
               ),
@@ -2609,12 +2744,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
     final protocols = [
       (
         'Auto',
-        isPersian ? 'خودکار' : 'Automatic',
+        localizedUiText(context, (isPersian ? 'خودکار' : 'Automatic')),
         Icons.auto_awesome_rounded,
         const Color(0xFF00E5FF),
-        isPersian
-            ? 'انتخاب خودکار مسیر اتصال'
-            : 'Automatic provider-managed routing',
+        localizedUiText(
+            context,
+            (isPersian
+                ? 'انتخاب خودکار مسیر اتصال'
+                : 'Automatic provider-managed routing')),
       ),
     ];
 
@@ -2719,131 +2856,305 @@ class _SettingsPageState extends ConsumerState<SettingsPage>
 
   Widget _buildAboutCard(
     BuildContext context,
-    AppStrings strings,
+    AppLocalizations l10n,
     ThemeData theme,
   ) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(20.r),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: EdgeInsets.all(10.w),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF00D4AA), Color(0xFF007A65)],
-                  ),
-                  borderRadius: BorderRadius.circular(14.r),
-                ),
-                child: Icon(
-                  Icons.rocket_launch_rounded,
-                  color: Colors.white,
-                  size: 22.sp,
-                ),
+    final borderRadius = BorderRadius.circular(20.r);
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: EdgeInsets.all(20.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.10),
+                const Color(0xFF09202E).withValues(alpha: 0.50),
+              ],
+            ),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.18),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.25),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
               ),
-              SizedBox(width: 14.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Wrap(
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            spacing: 8.w,
-                            runSpacing: 4.h,
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(10.w),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF00D4AA), Color(0xFF007A65)],
+                      ),
+                      borderRadius: BorderRadius.circular(14.r),
+                    ),
+                    child: Icon(
+                      Icons.rocket_launch_rounded,
+                      color: Colors.white,
+                      size: 22.sp,
+                    ),
+                  ),
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text: 'H',
+                              Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8.w,
+                                runSpacing: 4.h,
+                                children: [
+                                  RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: 'H',
+                                          style: TextStyle(
+                                            fontSize: 20.sp,
+                                            fontFamily: 'Lato',
+                                            fontWeight: FontWeight.w800,
+                                            color: const Color(0xFFFFC46B),
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: 'armoney',
+                                          style: TextStyle(
+                                            fontSize: 20.sp,
+                                            fontFamily: 'Lato',
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFFC46B)
+                                          .withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(6.r),
+                                      border: Border.all(
+                                        color: const Color(0xFFFFC46B)
+                                            .withValues(alpha: 0.4),
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: LocalizedText(
+                                      'by MilMit',
                                       style: TextStyle(
-                                        fontSize: 20.sp,
                                         fontFamily: 'Lato',
-                                        fontWeight: FontWeight.w800,
+                                        fontSize: 10.sp,
+                                        fontWeight: FontWeight.w700,
                                         color: const Color(0xFFFFC46B),
                                       ),
                                     ),
-                                    TextSpan(
-                                      text: 'armoney',
-                                      style: TextStyle(
-                                        fontSize: 20.sp,
-                                        fontFamily: 'Lato',
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                              Container(
-                                padding: EdgeInsets.symmetric(
-                                  horizontal: 6.w,
-                                  vertical: 2.h,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFFC46B)
-                                      .withValues(alpha: 0.15),
-                                  borderRadius: BorderRadius.circular(6.r),
-                                  border: Border.all(
-                                    color: const Color(0xFFFFC46B)
-                                        .withValues(alpha: 0.4),
-                                    width: 0.8,
-                                  ),
-                                ),
-                                child: LocalizedText(
-                                  'by MilMit',
-                                  style: TextStyle(
-                                    fontFamily: 'Lato',
-                                    fontSize: 10.sp,
-                                    fontWeight: FontWeight.w700,
-                                    color: const Color(0xFFFFC46B),
-                                  ),
+                              SizedBox(height: 3.h),
+                              LocalizedText(
+                                widget.appState.locale.languageCode == 'fa'
+                                    ? 'نسخه ۰.۱.۰ · توسعه‌یافته توسط MilMit'
+                                    : 'Version 0.1.0 · Developed by MilMit',
+                                style: TextStyle(
+                                  fontFamily: 'SF Pro',
+                                  fontSize: 11.sp,
+                                  color: Colors.grey[400],
                                 ),
                               ),
                             ],
                           ),
-                          SizedBox(height: 3.h),
-                          LocalizedText(
-                            widget.appState.locale.languageCode == 'fa'
-                                ? 'نسخه ۰.۱.۰ · توسعه‌یافته توسط MilMit'
-                                : 'Version 0.1.0 · Developed by MilMit',
-                            style: TextStyle(
-                              fontFamily: 'SF Pro',
-                              fontSize: 11.sp,
-                              color: Colors.grey[400],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 12.h),
+              LocalizedText(
+                l10n.appString_AboutDescription,
+                style: TextStyle(
+                  fontFamily: 'SF Pro',
+                  fontSize: 13.sp,
+                  color: Colors.grey[300],
+                  height: 1.4,
+                ),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(vertical: 14.h),
+                child: Divider(
+                  color: Colors.white.withValues(alpha: 0.10),
+                  height: 1,
+                ),
+              ),
+              ValueListenableBuilder<AppUpdateInfo?>(
+                valueListenable:
+                    AppUpdateService.instance.updateAvailableNotifier,
+                builder: (context, pendingUpdate, _) {
+                  if (pendingUpdate != null && pendingUpdate.hasUpdate) {
+                    return Container(
+                      width: double.infinity,
+                      padding: EdgeInsets.all(12.w),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFF00E5FF).withValues(alpha: 0.18),
+                            const Color(0xFF00F5B8).withValues(alpha: 0.10),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(14.r),
+                        border: Border.all(
+                          color:
+                              const Color(0xFF00F5B8).withValues(alpha: 0.45),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: EdgeInsets.all(8.w),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF00F5B8)
+                                  .withValues(alpha: 0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.new_releases_rounded,
+                              color: Color(0xFF00F5B8),
+                              size: 20,
+                            ),
+                          ),
+                          SizedBox(width: 10.w),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                LocalizedText(
+                                  'New Version Available',
+                                  style: TextStyle(
+                                    fontFamily: 'Lato',
+                                    fontSize: 13.sp,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                Text(
+                                  'v${pendingUpdate.latestVersion} (${pendingUpdate.formattedFileSize})',
+                                  style: TextStyle(
+                                    fontFamily: 'Lato',
+                                    fontSize: 11.sp,
+                                    color: const Color(0xFF00F5B8),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () =>
+                                AppUpdateDialog.show(context, pendingUpdate),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00F5B8),
+                              foregroundColor: const Color(0xFF071E2B),
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 14.w, vertical: 8.h),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10.r),
+                              ),
+                            ),
+                            child: LocalizedText(
+                              'Update',
+                              style: TextStyle(
+                                fontFamily: 'Lato',
+                                fontSize: 12.sp,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  ],
-                ),
+                    );
+                  }
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _updateStatusMessage != null
+                              ? _updateStatusMessage!
+                              : (widget.appState.locale.languageCode == 'fa'
+                                  ? 'بررسی خودکار از مخزن رسمی گیت‌هاب'
+                                  : 'Auto-updates via official GitHub releases'),
+                          style: TextStyle(
+                            fontFamily: 'SF Pro',
+                            fontSize: 11.sp,
+                            color: Colors.white60,
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 10.w),
+                      ElevatedButton.icon(
+                        onPressed: _isCheckingUpdate ? null : _checkUpdateNow,
+                        icon: _isCheckingUpdate
+                            ? SizedBox(
+                                width: 14.sp,
+                                height: 14.sp,
+                                child: const CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Color(0xFF071E2B),
+                                ),
+                              )
+                            : Icon(Icons.sync_rounded, size: 16.sp),
+                        label: LocalizedText(
+                          _isCheckingUpdate ? 'Checking...' : 'Check Updates',
+                          style: TextStyle(
+                            fontFamily: 'Lato',
+                            fontSize: 11.sp,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF00E5FF),
+                          foregroundColor: const Color(0xFF071E2B),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12.w,
+                            vertical: 8.h,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.r),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
             ],
           ),
-          SizedBox(height: 12.h),
-          LocalizedText(
-            strings.aboutDescription,
-            style: TextStyle(
-              fontFamily: 'SF Pro',
-              fontSize: 13.sp,
-              color: Colors.grey[300],
-              height: 1.4,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -2872,68 +3183,92 @@ class _ModernSettingsGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final dark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: dark
-            ? const Color(0xFF0B303D).withValues(alpha: 0.88)
-            : scheme.surface.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(18.r),
-        border: Border.all(
-          color: scheme.outlineVariant.withValues(alpha: dark ? 0.42 : 0.7),
-        ),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 14.h),
-            child: Row(
-              children: [
-                Container(
-                  padding: EdgeInsets.all(9.w),
-                  decoration: BoxDecoration(
-                    color: iconColor.withValues(alpha: 0.14),
-                    borderRadius: BorderRadius.circular(12.r),
-                  ),
-                  child: Icon(icon, color: iconColor, size: 20.sp),
-                ),
-                SizedBox(width: 14.w),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      LocalizedText(
-                        title,
-                        style: TextStyle(
-                          fontFamily: 'Lato',
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16.sp,
-                          color: scheme.onSurface,
-                          letterSpacing: -0.2,
-                        ),
-                      ),
-                      SizedBox(height: 2.h),
-                      LocalizedText(
-                        subtitle,
-                        style: TextStyle(
-                          fontFamily: 'SF Pro',
-                          fontSize: 12.sp,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                      ),
+    final borderRadius = BorderRadius.circular(20.r);
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: dark
+                  ? [
+                      Colors.white.withValues(alpha: 0.10),
+                      const Color(0xFF09222E).withValues(alpha: 0.52),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.85),
+                      scheme.surface.withValues(alpha: 0.70),
                     ],
-                  ),
-                ),
-              ],
             ),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: dark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : scheme.outlineVariant.withValues(alpha: 0.45),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: dark ? 0.25 : 0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
-          Divider(
-            height: 1,
-            color: scheme.outlineVariant.withValues(alpha: 0.45),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 14.h),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(9.w),
+                      decoration: BoxDecoration(
+                        color: iconColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Icon(icon, color: iconColor, size: 20.sp),
+                    ),
+                    SizedBox(width: 14.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          LocalizedText(
+                            title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16.sp,
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          LocalizedText(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(
+                height: 1,
+                color: scheme.outlineVariant.withValues(alpha: 0.45),
+              ),
+              ...children,
+            ],
           ),
-          ...children,
-        ],
+        ),
       ),
     );
   }
@@ -3016,7 +3351,6 @@ class _ModernSwitchTile extends StatelessWidget {
                               fontSize: 10.sp,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF00D4AA),
-                              fontFamily: 'Lato',
                             ),
                           ),
                         ),
@@ -3029,7 +3363,6 @@ class _ModernSwitchTile extends StatelessWidget {
                     style: TextStyle(
                       color: scheme.onSurfaceVariant,
                       fontSize: 12.sp,
-                      fontFamily: 'SF Pro',
                     ),
                   ),
                 ],

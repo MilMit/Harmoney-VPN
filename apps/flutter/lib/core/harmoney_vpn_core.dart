@@ -1,11 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+
+import 'desktop_security_guard.dart';
 import 'harmoney_native_service.dart';
 import 'harmoney_windows_xray.dart';
 import 'harmoney_source_updater.dart';
 import 'harmoney_subscription_service.dart';
 import 'harmoney_vpn_bridge.dart';
+import 'mobile_vpn_bridge.dart';
 import 'vpn_core.dart';
 
 class HarmoneyCore implements VpnCore {
@@ -347,6 +351,25 @@ class HarmoneyCore implements VpnCore {
     return null;
   }
 
+  Future<bool> _isRuntimeCompromised() async {
+    if (kDebugMode) return false;
+    try {
+      if (Platform.isAndroid) {
+        final posture = await MobileVpnBridge.runtimeSecurityStatus();
+        return posture['debugger_attached'] == true ||
+            posture['debuggable_build'] == true ||
+            posture['virtual_environment'] == true ||
+            posture['signature_compromised'] == true;
+      }
+      if (Platform.isLinux || Platform.isWindows) {
+        return await DesktopSecurityGuard.isDebuggerAttached();
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   @override
   Future<void> connect({
     required String providerId,
@@ -355,6 +378,18 @@ class HarmoneyCore implements VpnCore {
   }) async {
     final generation = ++_generation;
     _activeServer = server ?? _defaultServers.first;
+
+    if (await _isRuntimeCompromised()) {
+      _emitState(
+        VpnConnectionState(
+          status: VpnConnectionStatus.error,
+          providerId: providerId,
+          server: _activeServer,
+          errorMessage: 'اتصال به دلیل مسائل امنیتی دستگاه متوقف شد.',
+        ),
+      );
+      return;
+    }
 
     _emitState(
       VpnConnectionState(

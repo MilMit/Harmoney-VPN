@@ -43,7 +43,7 @@
         <li><b>Harmoney Smart Core:</b> Autonomous intelligent routing across <code>VLESS</code>, <code>VMess</code>, <code>Trojan</code>, <code>Shadowsocks</code>, <code>MASQUE</code>, and <code>WARP</code>.</li>
         <li><b>FireTunnel Core:</b> First-class Mozilla Guardian / Firefox VPN integration with native headless OAuth token exchange.</li>
         <li><b>WireGuard & OpenVPN:</b> Complete native profile manager supporting <code>.conf</code>, <code>.ovpn</code>, and bulk <code>.zip</code> archive imports.</li>
-        <li><b>Harmoney Pro / NiceVPN:</b> Integrated multi-hop relay and enterprise Cisco AnyConnect protocol compatibility.</li>
+        <li><b>Harmoney Pro / Harmoney Plus:</b> Integrated multi-hop relay and enterprise Cisco AnyConnect protocol compatibility.</li>
       </ul>
     </td>
     <td width="50%">

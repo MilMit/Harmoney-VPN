@@ -5,6 +5,7 @@
 #include <flutter/standard_method_codec.h>
 
 #include <string>
+#include <map>
 #include <optional>
 #include <variant>
 
@@ -17,12 +18,45 @@ constexpr UINT kTrayOpen = 41001;
 constexpr UINT kTrayToggle = 41002;
 constexpr UINT kTrayServers = 41003;
 constexpr UINT kTrayExit = 41004;
+constexpr UINT kTraySettings = 41005;
+constexpr UINT kTrayLogs = 41006;
+constexpr UINT kTrayAutoConnect = 41007;
+constexpr UINT kTrayLaunchOnStartup = 41008;
+constexpr UINT kTrayStartMinimized = 41009;
+constexpr UINT kTrayExitFallbackTimer = 41010;
+constexpr UINT kTrayQuitNow = WM_APP + 42;
 constexpr UINT kTrayIconId = 1;
+
+std::wstring Utf8ToWide(const std::string& value) {
+  if (value.empty()) return {};
+  const int size = MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS,
+      value.data(), static_cast<int>(value.size()), nullptr, 0);
+  if (size <= 0) return {};
+  std::wstring result(static_cast<size_t>(size), L'\0');
+  MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, value.data(),
+      static_cast<int>(value.size()), result.data(), size);
+  return result;
+}
+
+std::string ReadString(const flutter::EncodableMap& values,
+                       const char* key) {
+  const auto it = values.find(flutter::EncodableValue(key));
+  if (it == values.end()) return {};
+  const auto* value = std::get_if<std::string>(&it->second);
+  return value == nullptr ? std::string{} : *value;
+}
+
+bool ReadBool(const flutter::EncodableMap& values, const char* key) {
+  const auto it = values.find(flutter::EncodableValue(key));
+  if (it == values.end()) return false;
+  const auto* value = std::get_if<bool>(&it->second);
+  return value != nullptr && *value;
+}
 }  // namespace
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project,
-                             bool show_window)
-    : project_(project), show_window_(show_window) {}
+                             bool show_window, bool tray_enabled)
+    : project_(project), show_window_(show_window), tray_enabled_(tray_enabled) {}
 
 FlutterWindow::~FlutterWindow() {}
 
@@ -49,23 +83,60 @@ bool FlutterWindow::OnCreate() {
       [this](const flutter::MethodCall<flutter::EncodableValue>& call,
              std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
         if (call.method_name() == "updateState") {
-          const auto* value = std::get_if<std::string>(call.arguments());
-          if (value != nullptr) {
-            tray_connected_ = value->rfind("connected|", 0) == 0;
-            const auto separator = value->find('|');
-            if (separator != std::string::npos) {
-              const auto name = value->substr(separator + 1);
-              tray_server_.assign(name.begin(), name.end());
+          const auto* values = std::get_if<flutter::EncodableMap>(call.arguments());
+          if (values != nullptr) {
+            const std::string status = ReadString(*values, "status");
+            tray_connected_ = status == "connected";
+            tray_transitioning_ = status == "connecting" || status == "disconnecting";
+            tray_auto_connect_ = ReadBool(*values, "autoConnect");
+            tray_launch_on_startup_ = ReadBool(*values, "launchOnStartup");
+            tray_start_minimized_ = ReadBool(*values, "startMinimized");
+            const char* label_key = tray_connected_ ? "connected" :
+                tray_transitioning_ ? (status == "disconnecting" ? "disconnecting" : "connecting") :
+                status == "error" ? "error" : "disconnected";
+            const wchar_t* fallback_status = tray_connected_ ? L"Connected" :
+                tray_transitioning_ ? (status == "disconnecting" ? L"Disconnecting" : L"Connecting") :
+                status == "error" ? L"Error" : L"Disconnected";
+            tray_status_text_ = Utf8ToWide(ReadString(*values, label_key));
+            if (tray_status_text_.empty()) tray_status_text_ = fallback_status;
+            const std::string name = ReadString(*values, "server");
+            tray_server_ = Utf8ToWide(name);
+            const auto labels_it = values->find(flutter::EncodableValue("labels"));
+            if (labels_it != values->end()) {
+              const auto* raw_labels = std::get_if<flutter::EncodableMap>(&labels_it->second);
+              if (raw_labels != nullptr) {
+              tray_labels_.clear();
+              for (const auto& entry : *raw_labels) {
+                const auto* key = std::get_if<std::string>(&entry.first);
+                const auto* value = std::get_if<std::string>(&entry.second);
+                if (key != nullptr && value != nullptr) {
+                  tray_labels_[*key] = Utf8ToWide(*value);
+                }
+              }
+              }
             }
             UpdateTrayTooltip();
+            if (!visibility_initialized_ && tray_enabled_) {
+              visibility_initialized_ = true;
+              show_window_ = !tray_start_minimized_;
+              if (tray_start_minimized_) ShowWindow(GetHandle(), SW_HIDE);
+            }
           }
           result->Success();
+          return;
+        }
+        if (call.method_name() == "quitApplication") {
+          KillTimer(GetHandle(), kTrayExitFallbackTimer);
+          tray_exiting_ = true;
+          RemoveTrayIcon();
+          result->Success();
+          PostMessage(GetHandle(), kTrayQuitNow, 0, 0);
           return;
         }
         result->NotImplemented();
       });
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
-  if (show_window_) AddTrayIcon();
+  if (tray_enabled_) AddTrayIcon();
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     if (show_window_) this->Show();
@@ -104,8 +175,21 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   }
 
   switch (message) {
+    case kTrayQuitNow:
+      tray_exiting_ = true;
+      DestroyWindow(hwnd);
+      return 0;
+    case WM_TIMER:
+      if (wparam == kTrayExitFallbackTimer) {
+        KillTimer(hwnd, kTrayExitFallbackTimer);
+        tray_exiting_ = true;
+        RemoveTrayIcon();
+        DestroyWindow(hwnd);
+        return 0;
+      }
+      break;
     case WM_CLOSE:
-      if (!tray_exiting_) {
+      if (tray_enabled_ && !tray_exiting_) {
         ShowWindow(hwnd, SW_HIDE);
         return 0;
       }
@@ -134,9 +218,28 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
           SetForegroundWindow(hwnd);
           InvokeTrayAction("openServers");
           return 0;
+        case kTraySettings:
+          Show();
+          SetForegroundWindow(hwnd);
+          InvokeTrayAction("openSettings");
+          return 0;
+        case kTrayLogs:
+          Show();
+          SetForegroundWindow(hwnd);
+          InvokeTrayAction("openLogs");
+          return 0;
+        case kTrayAutoConnect:
+          InvokeTrayAction("toggleAutoConnect");
+          return 0;
+        case kTrayLaunchOnStartup:
+          InvokeTrayAction("toggleLaunchOnStartup");
+          return 0;
+        case kTrayStartMinimized:
+          InvokeTrayAction("toggleStartMinimized");
+          return 0;
         case kTrayExit:
-          tray_exiting_ = true;
-          DestroyWindow(hwnd);
+          SetTimer(hwnd, kTrayExitFallbackTimer, 12000, nullptr);
+          InvokeTrayAction("quitApplication");
           return 0;
       }
       break;
@@ -169,8 +272,8 @@ void FlutterWindow::RemoveTrayIcon() {
 
 void FlutterWindow::UpdateTrayTooltip() {
   if (tray_icon_.hWnd == nullptr) return;
-  const std::wstring state = tray_connected_ ? L"Connected" : L"Disconnected";
-  const std::wstring tooltip = L"Harmoney VPN - " + state + L" - " + tray_server_;
+  const std::wstring tooltip = TrayLabel("appName", L"Harmoney VPN") + L" - " +
+      tray_status_text_ + L" - " + tray_server_;
   wcsncpy_s(tray_icon_.szTip, tooltip.c_str(), _TRUNCATE);
   tray_icon_.uFlags = NIF_TIP;
   Shell_NotifyIcon(NIM_MODIFY, &tray_icon_);
@@ -179,12 +282,31 @@ void FlutterWindow::UpdateTrayTooltip() {
 void FlutterWindow::ShowTrayMenu() {
   HMENU menu = CreatePopupMenu();
   if (menu == nullptr) return;
-  AppendMenu(menu, MF_STRING, kTrayOpen, L"Open Harmoney");
-  AppendMenu(menu, MF_STRING, kTrayToggle,
-             tray_connected_ ? L"Disconnect" : L"Connect");
-  AppendMenu(menu, MF_STRING, kTrayServers, L"Choose server...");
+  AppendMenuW(menu, MF_STRING, kTrayOpen,
+              TrayLabel("openApplication", L"Open Application").c_str());
+  const char* action_key = tray_connected_ ? "disconnect" :
+      tray_transitioning_ ? "cancelConnection" : "connect";
+  const wchar_t* action_fallback = tray_connected_ ? L"Disconnect" :
+      tray_transitioning_ ? L"Cancel connection" : L"Connect";
+  AppendMenuW(menu, MF_STRING, kTrayToggle,
+              TrayLabel(action_key, action_fallback).c_str());
+  AppendMenuW(menu, MF_STRING, kTrayServers,
+              TrayLabel("chooseServer", L"Choose server…").c_str());
+  AppendMenuW(menu, MF_STRING, kTraySettings,
+              TrayLabel("preferences", L"Preferences / Settings").c_str());
+  AppendMenuW(menu, MF_STRING, kTrayLogs,
+              TrayLabel("logs", L"Logs").c_str());
   AppendMenu(menu, MF_SEPARATOR, 0, nullptr);
-  AppendMenu(menu, MF_STRING, kTrayExit, L"Exit");
+  AppendMenuW(menu, MF_STRING | (tray_auto_connect_ ? MF_CHECKED : MF_UNCHECKED),
+              kTrayAutoConnect, TrayLabel("autoConnect", L"Auto-connect").c_str());
+  AppendMenuW(menu, MF_STRING | (tray_launch_on_startup_ ? MF_CHECKED : MF_UNCHECKED),
+              kTrayLaunchOnStartup,
+              TrayLabel("launchOnStartup", L"Launch on startup").c_str());
+  AppendMenuW(menu, MF_STRING | (tray_start_minimized_ ? MF_CHECKED : MF_UNCHECKED),
+              kTrayStartMinimized,
+              TrayLabel("startMinimized", L"Start minimized").c_str());
+  AppendMenu(menu, MF_SEPARATOR, 0, nullptr);
+  AppendMenuW(menu, MF_STRING, kTrayExit, TrayLabel("exit", L"Exit").c_str());
   POINT point{};
   GetCursorPos(&point);
   SetForegroundWindow(GetHandle());
@@ -192,6 +314,12 @@ void FlutterWindow::ShowTrayMenu() {
                  point.x, point.y, 0, GetHandle(), nullptr);
   PostMessage(GetHandle(), WM_NULL, 0, 0);
   DestroyMenu(menu);
+}
+
+std::wstring FlutterWindow::TrayLabel(const std::string& key,
+                                      const wchar_t* fallback) const {
+  const auto it = tray_labels_.find(key);
+  return it == tray_labels_.end() || it->second.empty() ? fallback : it->second;
 }
 
 void FlutterWindow::InvokeTrayAction(const char* method) {

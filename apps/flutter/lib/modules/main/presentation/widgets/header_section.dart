@@ -1,3 +1,4 @@
+import 'dart:ui';
 import '../../../../shared/country_flag.dart';
 
 import 'package:flutter/foundation.dart';
@@ -37,13 +38,18 @@ class HeaderSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPersian = Localizations.localeOf(context).languageCode == 'fa';
     final fallbackCountry = providerId == 'firetunnel'
-        ? (isPersian
-            ? 'سرور خودکار Firefox VPN'
-            : 'Automatic Firefox VPN server')
-        : (isPersian ? 'مسیریابی هوشمند Harmoney' : 'Harmoney Smart Route');
-    final fallbackCity = isPersian
-        ? 'با زدن اتصال، سرور در دسترس انتخاب می‌شود'
-        : 'An available server is chosen when you connect';
+        ? (localizedUiText(
+            context,
+            (isPersian
+                ? 'سرور خودکار Firefox VPN'
+                : 'Automatic Firefox VPN server')))
+        : (localizedUiText(context,
+            (isPersian ? 'مسیریابی هوشمند Harmoney' : 'Harmoney Smart Route')));
+    final fallbackCity = localizedUiText(
+        context,
+        (isPersian
+            ? 'انتخاب خودکار سریع‌ترین سرور'
+            : 'Automatic fastest route selection'));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
@@ -119,104 +125,128 @@ class HeaderSection extends StatelessWidget {
         const SizedBox(height: 12),
 
         // Server selection pill and real-time Ping
-        InkWell(
-          onTap: onSelectServer,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.12),
-                width: 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                // Flag / Route Icon
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                  ),
-                  alignment: Alignment.center,
-                  child: _buildLocationIcon(),
-                ),
-                const SizedBox(width: 12),
-
-                // Location Details
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      LocalizedText(
-                        (server?.countryCode == 'UNKNOWN' ||
-                                server?.country == 'Unknown')
-                            ? (Localizations.localeOf(context).languageCode ==
-                                    'fa'
-                                ? 'نامشخص'
-                                : 'Unknown')
-                            : (server?.country ?? fallbackCountry),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 15.sp.clamp(13.0, 17.0),
-                          fontFamily: 'Lato',
-                          fontWeight: FontWeight.w700,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 2),
-                      LocalizedText(
-                        server?.city ?? fallbackCity,
-                        style: TextStyle(
-                          color: Colors.white60,
-                          fontSize: 12.sp.clamp(10.0, 14.0),
-                          fontFamily: 'Lato',
-                          fontWeight: FontWeight.w400,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(18),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: InkWell(
+              onTap: onSelectServer,
+              borderRadius: BorderRadius.circular(18),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.white.withValues(alpha: 0.10),
+                      const Color(0xFF08202D).withValues(alpha: 0.45),
                     ],
                   ),
-                ),
-
-                // Ping Indicator
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: _pingColor,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    LocalizedText(
-                      pingMs != null && pingMs! > 0 ? '$pingMs ms' : '-- ms',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12.sp.clamp(10.0, 14.0),
-                        fontFamily: 'Lato',
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    const Icon(
-                      Icons.chevron_right_rounded,
-                      color: Colors.white38,
-                      size: 20,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.20),
+                    width: 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.25),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),
-              ],
+                child: Row(
+                  children: [
+                    // Flag / Route Icon
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: _buildLocationIcon(),
+                    ),
+                    const SizedBox(width: 12),
+
+                    // Location Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          LocalizedText(
+                            (server?.countryCode == 'UNKNOWN' ||
+                                    server?.country == 'Unknown')
+                                ? (Localizations.localeOf(context)
+                                            .languageCode ==
+                                        'fa'
+                                    ? 'نامشخص'
+                                    : 'Unknown')
+                                : (server?.country ?? fallbackCountry),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 15.sp.clamp(13.0, 17.0),
+                              fontFamily: 'Lato',
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          LocalizedText(
+                            server?.city ?? fallbackCity,
+                            style: TextStyle(
+                              color: Colors.white60,
+                              fontSize: 12.sp.clamp(10.0, 14.0),
+                              fontFamily: 'Lato',
+                              fontWeight: FontWeight.w400,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Ping Indicator
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _pingColor,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        LocalizedText(
+                          pingMs != null && pingMs! > 0
+                              ? '$pingMs ms'
+                              : '-- ms',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12.sp.clamp(10.0, 14.0),
+                            fontFamily: 'Lato',
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.chevron_right_rounded,
+                          color: Colors.white38,
+                          size: 20,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),

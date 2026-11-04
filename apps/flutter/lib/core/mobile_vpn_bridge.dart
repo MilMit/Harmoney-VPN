@@ -184,6 +184,16 @@ class MobileVpnBridge {
             const {},
       );
 
+  static Future<Map<String, dynamic>> runtimeSecurityStatus() async {
+    if (!Platform.isAndroid) return const {};
+    return Map<String, dynamic>.from(
+      await _android.invokeMapMethod<String, Object?>(
+            'runtimeSecurityStatus',
+          ) ??
+          const {},
+    );
+  }
+
   static Future<Map<String, dynamic>> setDnsProtection(bool enabled) async =>
       Map<String, dynamic>.from(
         await _channel.invokeMapMethod<String, Object?>('setDnsProtection', {
@@ -202,6 +212,9 @@ class MobileVpnBridge {
 
   static Future<void> openVpnSettings() =>
       _channel.invokeMethod<void>('openVpnSettings');
+
+  static Future<void> openTetherSettings() =>
+      _channel.invokeMethod<void>('openTetherSettings');
 
   static Future<void> saveCredentials({
     required String username,

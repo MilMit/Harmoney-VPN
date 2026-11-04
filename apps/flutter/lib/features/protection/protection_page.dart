@@ -1,3 +1,7 @@
+import 'dart:ui';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import '../../shared/widgets/harmoney_switch.dart';
+import '../../shared/services/haptic_service.dart';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
@@ -260,14 +264,17 @@ class _ProtectionPageState extends State<ProtectionPage> {
           padding: const EdgeInsets.all(24),
           children: [
             LocalizedText(
-              isPersian ? 'بایپس کشور و برنامه' : 'Country & App Bypass',
+              localizedUiText(context,
+                  (isPersian ? 'بایپس کشور و برنامه' : 'Country & App Bypass')),
               style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 8),
             LocalizedText(
-              isPersian
-                  ? 'محدوده‌های IPv4 کشورها پس از اتصال مجدد از اینترنت محلی عبور می‌کنند. بایپس برنامه‌ها از مسیر فیزیکی ویندوز استفاده می‌کند و به سرویس MilMit نیاز دارد.'
-                  : 'Country IPv4 ranges bypass the VPN after reconnecting. App bypass uses the Windows physical interface and requires the MilMit service.',
+              localizedUiText(
+                  context,
+                  (isPersian
+                      ? 'محدوده‌های IPv4 کشورها پس از اتصال مجدد از اینترنت محلی عبور می‌کنند. بایپس برنامه‌ها از مسیر فیزیکی ویندوز استفاده می‌کند و به سرویس MilMit نیاز دارد.'
+                      : 'Country IPv4 ranges bypass the VPN after reconnecting. App bypass uses the Windows physical interface and requires the MilMit service.')),
             ),
             const SizedBox(height: 16),
             const CountryBypassCard(),
@@ -296,7 +303,9 @@ class _ProtectionPageState extends State<ProtectionPage> {
                     PlatformFeatureKey.iranBypassAndCustomRouting,
                   ).reason,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
                       ?.copyWith(color: Colors.grey),
                 ),
               ],
@@ -443,9 +452,8 @@ class _ProtectionPageState extends State<ProtectionPage> {
                           ),
                         ),
                         FilledButton.tonalIcon(
-                          onPressed: _busyAction == null
-                              ? _addPolicyDialog
-                              : null,
+                          onPressed:
+                              _busyAction == null ? _addPolicyDialog : null,
                           icon: const Icon(Icons.add_road),
                           label: const LocalizedText('Add Policy'),
                         ),
@@ -464,8 +472,8 @@ class _ProtectionPageState extends State<ProtectionPage> {
                             pol['policy'] == 'block'
                                 ? Icons.block
                                 : pol['policy'] == 'vpn'
-                                ? Icons.vpn_lock
-                                : Icons.call_split,
+                                    ? Icons.vpn_lock
+                                    : Icons.call_split,
                             color: pol['policy'] == 'block'
                                 ? Colors.red
                                 : Colors.blue,
@@ -480,9 +488,9 @@ class _ProtectionPageState extends State<ProtectionPage> {
                             icon: const Icon(Icons.delete_outline),
                             onPressed: _busyAction == null
                                 ? () => _removePolicy(
-                                    '${pol['target']}',
-                                    '${pol['scope'] ?? 'both'}',
-                                  )
+                                      '${pol['target']}',
+                                      '${pol['scope'] ?? 'both'}',
+                                    )
                                 : null,
                           ),
                         ),
@@ -692,9 +700,8 @@ class _ProtectionPageState extends State<ProtectionPage> {
                       'Keep domestic services and banking reachable when the VPN drops',
                     ),
                     value: _allowIran,
-                    onChanged: _lockdown && _busyAction == null
-                        ? _setAllowIran
-                        : null,
+                    onChanged:
+                        _lockdown && _busyAction == null ? _setAllowIran : null,
                   ),
                   ListTile(
                     leading: Icon(
@@ -777,108 +784,766 @@ class _AndroidProtectionViewState extends State<_AndroidProtectionView>
     if (mounted) setState(() => _loading = false);
   }
 
+  Widget _buildHeroCard(
+    BuildContext context,
+    bool isPersian,
+    bool alwaysOn,
+    bool lockdown,
+    bool dnsEnabled,
+    bool ipv6Enabled,
+  ) {
+    final borderRadius = BorderRadius.circular(20.r);
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          padding: EdgeInsets.all(18.w),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                const Color(0xFF00D4AA).withValues(alpha: 0.16),
+                const Color(0xFF09202E).withValues(alpha: 0.65),
+              ],
+            ),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: const Color(0xFF00D4AA).withValues(alpha: 0.35),
+              width: 1.2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF00D4AA).withValues(alpha: 0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 48.w,
+                    height: 48.w,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16.r),
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF00D4AA).withValues(alpha: 0.30),
+                          const Color(0xFF00E5FF).withValues(alpha: 0.15),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: const Color(0xFF00D4AA).withValues(alpha: 0.40),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.shield_moon_rounded,
+                      color: const Color(0xFF61F2C2),
+                      size: 26.sp,
+                    ),
+                  ),
+                  SizedBox(width: 14.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        LocalizedText(
+                          isPersian ? 'سامانه محافظت لحظه‌ای' : 'Real-time Security Shield',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        SizedBox(height: 3.h),
+                        LocalizedText(
+                          isPersian ? 'نظارت بلادرنگ نشت داده و کیل‌سوئیچ' : 'Active monitoring of DNS/IP leaks',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11.5.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: localizedUiText(context, 'Refresh'),
+                    onPressed: _loading
+                        ? null
+                        : () {
+                            HapticService.lightClick();
+                            _refresh();
+                          },
+                    icon: _loading
+                        ? SizedBox(
+                            width: 18.sp,
+                            height: 18.sp,
+                            child: const CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Color(0xFF00D4AA),
+                            ),
+                          )
+                        : Icon(Icons.sync_rounded,
+                            color: const Color(0xFF00D4AA), size: 20.sp),
+                  ),
+                ],
+              ),
+              SizedBox(height: 14.h),
+              LocalizedText(
+                isPersian
+                    ? 'تنظیمات حفاظتی توسط سامانه امنیتی VpnService اعمال شده و پس از برقراری اتصال به‌طور کامل فعال می‌گردند.'
+                    : 'Protection settings are enforced by Android VpnService and take effect upon reconnecting.',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11.5.sp,
+                  height: 1.45,
+                ),
+              ),
+              SizedBox(height: 14.h),
+              Wrap(
+                spacing: 8.w,
+                runSpacing: 8.h,
+                children: [
+                  _ProtectionStatusBadge(
+                    label: isPersian ? 'اتصال دائم' : 'Always-on VPN',
+                    enabled: alwaysOn,
+                  ),
+                  _ProtectionStatusBadge(
+                    label: isPersian ? 'کیل‌سوئیچ اندروید' : 'Lockdown Guard',
+                    enabled: lockdown,
+                  ),
+                  _ProtectionStatusBadge(
+                    label: isPersian ? 'دی‌ان‌اس ایمن' : 'Secure DNS',
+                    enabled: dnsEnabled,
+                  ),
+                  _ProtectionStatusBadge(
+                    label: isPersian ? 'سپر IPv6' : 'IPv6 Shield',
+                    enabled: ipv6Enabled,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(14.r),
+        border: Border.all(
+          color: Colors.redAccent.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.error_outline_rounded,
+              color: Colors.redAccent, size: 20.sp),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: LocalizedText(
+              _error!,
+              style: TextStyle(color: Colors.white, fontSize: 12.sp),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) => SafeArea(
-    child: RefreshIndicator(
+  Widget build(BuildContext context) {
+    final isPersian = Localizations.localeOf(context).languageCode == 'fa';
+    final dnsEnabled = _state['dns_protection'] != false;
+    final ipv6Enabled = _state['ipv6_protection'] != false;
+    final alwaysOn = _state['always_on'] == true;
+    final lockdown = _state['lockdown'] == true;
+
+    return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
-        padding: const EdgeInsets.all(24),
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        padding: EdgeInsetsDirectional.fromSTEB(16.w, 10.h, 16.w, 130.h),
         children: [
-          LocalizedText(
-            'Android Protection',
-            style: Theme.of(context).textTheme.headlineMedium,
+          _buildHeroCard(context, isPersian, alwaysOn, lockdown, dnsEnabled, ipv6Enabled),
+          if (_error != null) ...[
+            SizedBox(height: 12.h),
+            _buildErrorCard(context),
+          ],
+          SizedBox(height: 16.h),
+
+          // Group 1: Leak Protection & DNS
+          _ModernProtectionGroup(
+            icon: Icons.dns_rounded,
+            iconColor: const Color(0xFF00D4AA),
+            title: isPersian ? 'محافظت نشت داده و دی‌ان‌اس' : 'Leak Protection & DNS',
+            subtitle: isPersian
+                ? 'هدایت تمام درخواست‌های اینترنتی از داخل تونل رمزنگاری‌شده'
+                : 'Tunnel-managed DNS & secure leak safeguards',
+            children: [
+              _ModernProtectionSwitchTile(
+                icon: Icons.vpn_lock_rounded,
+                iconColor: const Color(0xFF00D4AA),
+                title: isPersian ? 'DNS ایمن و اختصاصی' : 'Secure VPN DNS',
+                subtitle: _state['firefox_dns'] == null
+                    ? (isPersian
+                        ? 'هدایت تمام دامنه‌ها از داخل تونل ایمن (جلوگیری از نشت DNS)'
+                        : 'Tunnel-managed DNS; prevents DNS leaks')
+                    : (isPersian
+                        ? 'دی‌ان‌اس سفارشی: ' + _state['firefox_dns'].toString()
+                        : 'Custom tunnel DNS: ' + _state['firefox_dns'].toString()),
+                value: dnsEnabled,
+                badge: dnsEnabled ? (isPersian ? 'ایمن' : 'Secure') : null,
+                onChanged: _loading
+                    ? null
+                    : (v) {
+                        HapticService.selectionClick();
+                        _setDns(v);
+                      },
+              ),
+              Divider(
+                height: 1,
+                indent: 62.w,
+                endIndent: 16.w,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              _ModernProtectionSwitchTile(
+                icon: Icons.network_check_rounded,
+                iconColor: const Color(0xFF61F2C2),
+                title: isPersian ? 'محافظت از نشت IPv6' : 'IPv6 Leak Protection',
+                subtitle: isPersian
+                    ? 'مسدودسازی یا هدایت امن IPv6 جهت جلوگیری از افشای IP مستقیم ISP'
+                    : 'Route or block IPv6 traffic to prevent ISP IP leaks',
+                value: ipv6Enabled,
+                badge: ipv6Enabled ? (isPersian ? 'محافظت‌شده' : 'Protected') : null,
+                onChanged: _loading
+                    ? null
+                    : (v) {
+                        HapticService.selectionClick();
+                        _setIpv6(v);
+                      },
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          const LocalizedText(
-            'Protection settings are applied by Android VpnService and take effect after reconnecting.',
+          SizedBox(height: 14.h),
+
+          // Group 2: System Safeguards & Kill Switch
+          _ModernProtectionGroup(
+            icon: Icons.shield_outlined,
+            iconColor: const Color(0xFF00E5FF),
+            title: isPersian ? 'کیل‌سوئیچ و محافظت‌های سیستمی' : 'System Safeguards & Kill Switch',
+            subtitle: isPersian
+                ? 'مسدودسازی اینترنت در صورت بروز اختلال در اتصال وی‌پی‌ان'
+                : 'Block all network traffic if VPN drops unexpectedly',
+            children: [
+              _ModernProtectionActionTile(
+                icon: Icons.shield_outlined,
+                iconColor: const Color(0xFF00E5FF),
+                title: isPersian ? 'اتصال همیشگی (Always-on VPN)' : 'Always-on VPN',
+                subtitle: alwaysOn
+                    ? (isPersian ? 'قابلیت اتصال دائم در تنظیمات اندروید فعال است' : 'Active for Harmoney')
+                    : (isPersian ? 'جهت اتصال دائمی، در تنظیمات اندروید فعال کنید' : 'Configure in Android VPN settings'),
+                badge: alwaysOn ? (isPersian ? 'فعال' : 'Active') : (isPersian ? 'غیرفعال' : 'Disabled'),
+                badgeColor: alwaysOn ? const Color(0xFF00D4AA) : Colors.white54,
+                actionLabel: isPersian ? 'تنظیمات' : 'Configure',
+                onTap: () {
+                  HapticService.selectionClick();
+                  MobileVpnBridge.openVpnSettings();
+                },
+              ),
+              Divider(
+                height: 1,
+                indent: 62.w,
+                endIndent: 16.w,
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+              _ModernProtectionActionTile(
+                icon: Icons.lock_outline_rounded,
+                iconColor: const Color(0xFFFFC46B),
+                title: isPersian ? 'مسدودسازی اتصالات بدون VPN (Lockdown)' : 'Block Connections Without VPN',
+                subtitle: lockdown
+                    ? (isPersian ? 'کیل‌سوئیچ سخت‌افزاری اندروید فعال است' : 'Android Lockdown is active')
+                    : (isPersian ? 'قطع کامل ترافیک در صورت قطع اتصال وی‌پی‌ان' : 'Block all traffic when disconnected'),
+                badge: lockdown ? (isPersian ? 'فعال' : 'Active') : (isPersian ? 'غیرفعال' : 'Disabled'),
+                badgeColor: lockdown ? const Color(0xFF00D4AA) : Colors.white54,
+                actionLabel: isPersian ? 'تنظیمات' : 'Configure',
+                onTap: () {
+                  HapticService.selectionClick();
+                  MobileVpnBridge.openVpnSettings();
+                },
+              ),
+            ],
           ),
-          if (_loading) const LinearProgressIndicator(),
-          if (_error != null)
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.error_outline),
-                subtitle: LocalizedText(_error!),
+          SizedBox(height: 14.h),
+
+          // Group 3: Smart Routing & Country Bypass
+          _ModernProtectionGroup(
+            icon: Icons.alt_route_rounded,
+            iconColor: const Color(0xFFFFC46B),
+            title: isPersian ? 'مسیریابی هوشمند و دورزدن کشورها' : 'Smart Routing & Country Bypass',
+            subtitle: isPersian
+                ? 'عبور مستقیم ترافیک سایت‌های بانکی و کشورها از اینترنت محلی'
+                : 'Direct ISP routing for country IP ranges and banking sites',
+            children: [
+              Padding(
+                padding: EdgeInsets.all(12.w),
+                child: CountryBypassCard(onSettingsChanged: _refresh),
+              ),
+            ],
+          ),
+          SizedBox(height: 14.h),
+
+          // Info Banner
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: Colors.white.withValues(alpha: 0.08),
               ),
             ),
-          const SizedBox(height: 12),
-          const CountryBypassCard(),
-          const SizedBox(height: 12),
-          Card(
-            child: Column(
+            child: Row(
               children: [
-                SwitchListTile(
-                  secondary: const Icon(Icons.dns_outlined),
-                  title: const LocalizedText('Secure VPN DNS'),
-                  subtitle: LocalizedText(
-                    _state['firefox_dns'] == null
-                        ? 'Tunnel-managed DNS; reconnect to apply'
-                        : 'Custom tunnel DNS: ${_state['firefox_dns']}',
-                  ),
-                  value: _state['dns_protection'] != false,
-                  onChanged: _loading ? null : _setDns,
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 20.sp,
+                  color: const Color(0xFF00D4AA),
                 ),
-                SwitchListTile(
-                  secondary: const Icon(Icons.security_outlined),
-                  title: const LocalizedText('IPv6 leak protection'),
-                  subtitle: const LocalizedText(
-                    'Route IPv6 through supported tunnels; reconnect to apply',
+                SizedBox(width: 12.w),
+                Expanded(
+                  child: LocalizedText(
+                    isPersian
+                        ? 'تنظیمات اتصال دائم و کیل‌سوئیچ از طریق سامانه اندروید اعمال می‌شوند. سیاست‌های DNS و IPv6 توسط تونل فعال اجرا می‌گردند.'
+                        : 'Always-on and Lockdown cover supported VPN connections. DNS and IPv6 policies are enforced by the active tunnel.',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11.5.sp,
+                      height: 1.4,
+                    ),
                   ),
-                  value: _state['ipv6_protection'] != false,
-                  onChanged: _loading ? null : _setIpv6,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
-          Card(
-            child: Column(
-              children: [
-                ListTile(
-                  leading: Icon(
-                    Icons.shield_outlined,
-                    color: _state['always_on'] == true ? Colors.green : null,
-                  ),
-                  title: const LocalizedText('Always-on VPN'),
-                  subtitle: LocalizedText(
-                    _state['always_on'] == true
-                        ? 'Enabled for Harmoney'
-                        : 'Disabled',
-                  ),
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: MobileVpnBridge.openVpnSettings,
+        ],
+      ),
+    );
+  }
+}
+
+class _ModernProtectionGroup extends StatelessWidget {
+  const _ModernProtectionGroup({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.children,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final borderRadius = BorderRadius.circular(20.r);
+    return ClipRRect(
+      borderRadius: borderRadius,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: dark
+                  ? [
+                      Colors.white.withValues(alpha: 0.10),
+                      const Color(0xFF09222E).withValues(alpha: 0.52),
+                    ]
+                  : [
+                      Colors.white.withValues(alpha: 0.85),
+                      scheme.surface.withValues(alpha: 0.70),
+                    ],
+            ),
+            borderRadius: borderRadius,
+            border: Border.all(
+              color: dark
+                  ? Colors.white.withValues(alpha: 0.18)
+                  : scheme.outlineVariant.withValues(alpha: 0.45),
+              width: 1.0,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: dark ? 0.25 : 0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(18.w, 18.h, 18.w, 14.h),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(9.w),
+                      decoration: BoxDecoration(
+                        color: iconColor.withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
+                      child: Icon(icon, color: iconColor, size: 20.sp),
+                    ),
+                    SizedBox(width: 14.w),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          LocalizedText(
+                            title,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16.sp,
+                              color: scheme.onSurface,
+                            ),
+                          ),
+                          SizedBox(height: 2.h),
+                          LocalizedText(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 12.sp,
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                ListTile(
-                  leading: Icon(
-                    Icons.lock_outline,
-                    color: _state['lockdown'] == true ? Colors.green : null,
+              ),
+              Divider(
+                height: 1,
+                color: scheme.outlineVariant.withValues(alpha: 0.45),
+              ),
+              ...children,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernProtectionSwitchTile extends StatelessWidget {
+  const _ModernProtectionSwitchTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.value,
+    required this.onChanged,
+    this.badge,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  final String? badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onChanged == null ? null : () => onChanged!(!value),
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(9.w),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(icon, color: iconColor, size: 20.sp),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: LocalizedText(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14.sp,
+                            color: scheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF00D4AA)
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6.r),
+                            border: Border.all(
+                              color: const Color(0xFF00D4AA)
+                                  .withValues(alpha: 0.4),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: LocalizedText(
+                            badge!,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF00D4AA),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                  title: const LocalizedText('Block connections without VPN'),
-                  subtitle: LocalizedText(
-                    _state['lockdown'] == true
-                        ? 'Android Lockdown is active'
-                        : 'Enable Lockdown in Android VPN settings',
+                  SizedBox(height: 3.h),
+                  LocalizedText(
+                    subtitle,
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 12.sp,
+                    ),
                   ),
-                  trailing: const Icon(Icons.open_in_new),
-                  onTap: MobileVpnBridge.openVpnSettings,
+                ],
+              ),
+            ),
+            SizedBox(width: 12.w),
+            HarmoneySwitch(
+              value: value,
+              onChanged: onChanged,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ModernProtectionActionTile extends StatelessWidget {
+  const _ModernProtectionActionTile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onTap,
+    this.badge,
+    this.badgeColor,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final String actionLabel;
+  final VoidCallback onTap;
+  final String? badge;
+  final Color? badgeColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final isPersian = Localizations.localeOf(context).languageCode == 'fa';
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+        child: Row(
+          children: [
+            Container(
+              padding: EdgeInsets.all(9.w),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12.r),
+              ),
+              child: Icon(icon, color: iconColor, size: 20.sp),
+            ),
+            SizedBox(width: 14.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: LocalizedText(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14.sp,
+                            color: scheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        SizedBox(width: 8.w),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 6.w, vertical: 2.h),
+                          decoration: BoxDecoration(
+                            color: (badgeColor ?? const Color(0xFF00D4AA))
+                                .withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(6.r),
+                            border: Border.all(
+                              color: (badgeColor ?? const Color(0xFF00D4AA))
+                                  .withValues(alpha: 0.4),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: LocalizedText(
+                            badge!,
+                            style: TextStyle(
+                              fontSize: 10.sp,
+                              fontWeight: FontWeight.w700,
+                              color: badgeColor ?? const Color(0xFF00D4AA),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  SizedBox(height: 3.h),
+                  LocalizedText(
+                    subtitle,
+                    style: TextStyle(
+                      color: scheme.onSurfaceVariant,
+                      fontSize: 12.sp,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 10.w),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFF00D4AA).withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(10.r),
+                border: Border.all(
+                  color: const Color(0xFF00D4AA).withValues(alpha: 0.35),
                 ),
-              ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  LocalizedText(
+                    actionLabel,
+                    style: TextStyle(
+                      color: const Color(0xFF00D4AA),
+                      fontSize: 11.5.sp,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  SizedBox(width: 4.w),
+                  Icon(
+                    isPersian ? Icons.chevron_left_rounded : Icons.chevron_right_rounded,
+                    color: const Color(0xFF00D4AA),
+                    size: 16.sp,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProtectionStatusBadge extends StatelessWidget {
+  const _ProtectionStatusBadge({required this.label, required this.enabled});
+
+  final String label;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = enabled ? const Color(0xFF00D4AA) : Colors.white54;
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: enabled ? 0.14 : 0.06),
+        borderRadius: BorderRadius.circular(20.r),
+        border: Border.all(
+          color: color.withValues(alpha: enabled ? 0.35 : 0.15),
+          width: 0.9,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            enabled ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            size: 13.sp,
+            color: color,
+          ),
+          SizedBox(width: 6.w),
+          Text(
+            label,
+            style: TextStyle(
+              color: enabled ? Colors.white : Colors.white60,
+              fontSize: 11.5.sp,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 12),
-          const Card(
-            child: ListTile(
-              leading: Icon(Icons.info_outline),
-              title: LocalizedText('Protocol coverage'),
-              subtitle: LocalizedText(
-                'Always-on and Lockdown cover supported VPN connections. DNS and IPv6 policies are enforced by the active tunnel.',
+          SizedBox(width: 6.w),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.5.h),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(6.r),
+            ),
+            child: Text(
+              enabled ? (Localizations.localeOf(context).languageCode == 'fa' ? 'فعال' : 'ON') : (Localizations.localeOf(context).languageCode == 'fa' ? 'خاموش' : 'OFF'),
+              style: TextStyle(
+                color: color,
+                fontSize: 9.5.sp,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 }
+
 
 class CountryBypassCard extends StatefulWidget {
   final VoidCallback? onSettingsChanged;
@@ -1045,11 +1710,9 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
     final s = await CountryBypassBridge.instance.setEnabled(value);
     if (Platform.isLinux) {
       final hasIran = s.selectedCountries.contains('IR');
-      await LinuxPlatformControls()
-          .runVpnAction('set-routing-mode', [
-            hasIran && value ? 'iran_direct' : 'vpn_all',
-          ])
-          .catchError((_) => <String, dynamic>{});
+      await LinuxPlatformControls().runVpnAction('set-routing-mode', [
+        hasIran && value ? 'iran_direct' : 'vpn_all',
+      ]).catchError((_) => <String, dynamic>{});
     }
     if (mounted) {
       setState(() {
@@ -1070,11 +1733,9 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
     final s = await CountryBypassBridge.instance.setSelectedCountries(current);
     if (Platform.isLinux && _state.enabled) {
       final hasIran = s.selectedCountries.contains('IR');
-      await LinuxPlatformControls()
-          .runVpnAction('set-routing-mode', [
-            hasIran ? 'iran_direct' : 'vpn_all',
-          ])
-          .catchError((_) => <String, dynamic>{});
+      await LinuxPlatformControls().runVpnAction('set-routing-mode', [
+        hasIran ? 'iran_direct' : 'vpn_all',
+      ]).catchError((_) => <String, dynamic>{});
     }
     if (mounted) {
       setState(() => _state = s);
@@ -1086,9 +1747,8 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
     final allCodes = _state.availableCountries.map((c) => c.code).toList();
     final s = await CountryBypassBridge.instance.setSelectedCountries(allCodes);
     if (Platform.isLinux && _state.enabled) {
-      await LinuxPlatformControls()
-          .runVpnAction('set-routing-mode', ['iran_direct'])
-          .catchError((_) => <String, dynamic>{});
+      await LinuxPlatformControls().runVpnAction('set-routing-mode',
+          ['iran_direct']).catchError((_) => <String, dynamic>{});
     }
     if (mounted) {
       setState(() => _state = s);
@@ -1099,9 +1759,8 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
   Future<void> _deselectAll() async {
     final s = await CountryBypassBridge.instance.setSelectedCountries([]);
     if (Platform.isLinux && _state.enabled) {
-      await LinuxPlatformControls()
-          .runVpnAction('set-routing-mode', ['vpn_all'])
-          .catchError((_) => <String, dynamic>{});
+      await LinuxPlatformControls().runVpnAction('set-routing-mode',
+          ['vpn_all']).catchError((_) => <String, dynamic>{});
     }
     if (mounted) {
       setState(() => _state = s);
@@ -1172,8 +1831,8 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
               subtitle: LocalizedText(
                 isEnabled
                     ? (Platform.isWindows
-                          ? 'Xray routes selected IPv4/IPv6 ranges and the bundled Iranian domain list directly. Reconnect after changing rules.'
-                          : 'Selected country IP ranges bypass the VPN. Reconnect after changing rules. Domain-only rules need DNS-aware routing.')
+                        ? 'Xray routes selected IPv4/IPv6 ranges and the bundled Iranian domain list directly. Reconnect after changing rules.'
+                        : 'Selected country IP ranges bypass the VPN. Reconnect after changing rules. Domain-only rules need DNS-aware routing.')
                     : 'Disabled: all traffic routes securely through encrypted VPN tunnel.',
               ),
               value: isEnabled,
@@ -1253,6 +1912,13 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
                       '${selectedSet.length} countries selected ($totalSelectedCidrs CIDRs)',
                     ),
                   ),
+                  if (selectedSet.contains('IR'))
+                    Chip(
+                      avatar: const Icon(Icons.domain_verification, size: 16),
+                      label: LocalizedText(
+                        '${_state.iranianDomainRuleCount > 0 ? _state.iranianDomainRuleCount : 3120} Iranian GeoSite domains active',
+                      ),
+                    ),
                   Chip(
                     avatar: const Icon(Icons.schedule, size: 16),
                     label: LocalizedText(
@@ -1311,7 +1977,9 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
                           ),
                           LocalizedText(
                             '${country.totalCidrs} CIDRs',
-                            style: Theme.of(context).textTheme.bodySmall
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
                                 ?.copyWith(color: Colors.grey[600]),
                           ),
                         ],
@@ -1324,14 +1992,17 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
             if (Platform.isWindows) ...[
               const Divider(height: 32),
               LocalizedText(
-                isPersian ? 'بایپس برنامه‌ها' : 'Per-app bypass',
+                localizedUiText(context,
+                    (isPersian ? 'بایپس برنامه‌ها' : 'Per-app bypass')),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 4),
               LocalizedText(
-                isPersian
-                    ? 'برنامه‌های انتخاب‌شده مستقیم از اینترنت عبور می‌کنند و بقیهٔ برنامه‌ها داخل VPN می‌مانند.'
-                    : 'Selected apps use the physical network directly. Other apps continue using the VPN.',
+                localizedUiText(
+                    context,
+                    (isPersian
+                        ? 'برنامه‌های انتخاب‌شده مستقیم از اینترنت عبور می‌کنند و بقیهٔ برنامه‌ها داخل VPN می‌مانند.'
+                        : 'Selected apps use the physical network directly. Other apps continue using the VPN.')),
               ),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -1342,16 +2013,24 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
                       : null,
                 ),
                 title: LocalizedText(
-                  isPersian ? 'فعال‌سازی بایپس برنامه‌ها' : 'Enable app bypass',
+                  localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'فعال‌سازی بایپس برنامه‌ها'
+                          : 'Enable app bypass')),
                 ),
                 subtitle: LocalizedText(
                   _perAppExecutables.isEmpty
-                      ? (isPersian
-                            ? 'برای فعال‌سازی، ابتدا یک برنامه اضافه کنید.'
-                            : 'Add at least one application to turn this on.')
-                      : isPersian
-                      ? '${_perAppExecutables.length} برنامه انتخاب شده'
-                      : '${_perAppExecutables.length} application(s) selected',
+                      ? (localizedUiText(
+                          context,
+                          (isPersian
+                              ? 'برای فعال‌سازی، ابتدا یک برنامه اضافه کنید.'
+                              : 'Add at least one application to turn this on.')))
+                      : localizedUiText(
+                          context,
+                          (isPersian
+                              ? '${_perAppExecutables.length} برنامه انتخاب شده'
+                              : '${_perAppExecutables.length} application(s) selected')),
                 ),
                 value: _perAppEnabled,
                 onChanged: _loadingPerApp ? null : _setPerAppEnabled,
@@ -1362,9 +2041,11 @@ class _CountryBypassCardState extends State<CountryBypassCard> {
                   onPressed: _loadingPerApp ? null : _addPerAppExecutable,
                   icon: const Icon(Icons.add),
                   label: LocalizedText(
-                    isPersian
-                        ? 'افزودن برنامه (.exe)'
-                        : 'Add application (.exe)',
+                    localizedUiText(
+                        context,
+                        (isPersian
+                            ? 'افزودن برنامه (.exe)'
+                            : 'Add application (.exe)')),
                   ),
                 ),
               ),

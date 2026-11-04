@@ -53,7 +53,10 @@ class _LiveTrafficChartState extends State<LiveTrafficChart> {
     if (!mounted) return;
     _timeCursor += 1;
 
-    final hasLiveTraffic = widget.isConnected && _snapshot.isConnected;
+    final hasLiveTraffic = widget.isConnected &&
+        (_snapshot.isConnected ||
+            widget.currentDownloadMbps != null ||
+            widget.currentUploadMbps != null);
     final rxBps = hasLiveTraffic
         ? (widget.currentDownloadMbps != null
             ? (widget.currentDownloadMbps! * 1024 * 1024 / 8).round()

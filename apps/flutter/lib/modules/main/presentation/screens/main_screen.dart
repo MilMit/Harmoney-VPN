@@ -24,6 +24,7 @@ import 'package:milmit_vpn_client/app/localized_text.dart';
 class MainScreen extends ConsumerStatefulWidget {
   final AppState appState;
   final VpnServer? selectedServer;
+  final bool isActive;
   final VoidCallback onOpenLocations;
   final VoidCallback onOpenSpeedTest;
   final VoidCallback onOpenProtection;
@@ -33,6 +34,7 @@ class MainScreen extends ConsumerStatefulWidget {
     super.key,
     required this.appState,
     this.selectedServer,
+    this.isActive = true,
     required this.onOpenLocations,
     required this.onOpenSpeedTest,
     required this.onOpenProtection,
@@ -53,18 +55,37 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   bool _copiedIp = false;
   Timer? _copiedTimer;
   StreamSubscription<TrafficDataSnapshot>? _trafficSub;
-  TrafficDataSnapshot _traffic = TrafficAnalyticsService.instance.current;
+  late final ValueNotifier<TrafficDataSnapshot> _trafficNotifier;
 
   @override
   void initState() {
     super.initState();
+    _trafficNotifier = ValueNotifier(TrafficAnalyticsService.instance.current);
     TrafficAnalyticsService.instance.init();
     _trafficSub = TrafficAnalyticsService.instance.stream.listen((data) {
-      if (mounted) setState(() => _traffic = data);
+      _trafficNotifier.value = data;
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant MainScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isActive != widget.isActive) {
+      final state = ref.read(connectionStateProvider).asData?.value;
+      _syncPingTimer(state?.isConnected == true);
+    }
+  }
+
+  void _syncPingTimer(bool isConnected) {
+    if (!widget.isActive || !isConnected) {
+      _pingTimer?.cancel();
+      _pingTimer = null;
+      return;
+    }
+    if (_pingTimer != null) return;
     _refreshPing();
     _pingTimer = Timer.periodic(
-      const Duration(seconds: 15),
+      const Duration(minutes: 1),
       (_) => _refreshPing(),
     );
   }
@@ -74,6 +95,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     _trafficSub?.cancel();
     _pingTimer?.cancel();
     _copiedTimer?.cancel();
+    _trafficNotifier.dispose();
+    TrafficAnalyticsService.instance.stopMonitoring();
     super.dispose();
   }
 
@@ -240,6 +263,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       error: (e, _) => Center(child: LocalizedText('Error: $e')),
       data: (state) {
         final status = state.status;
+        _syncPingTimer(state.isConnected);
         final selectedServer =
             widget.selectedServer?.providerId == widget.appState.provider
                 ? widget.selectedServer
@@ -280,7 +304,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                       SizedBox(height: 16.h),
                       const HarmoneyProDownloadCard(),
 
-                      SizedBox(height: 36.h.clamp(24.0, 50.0)),
+                      SizedBox(height: 22.h.clamp(16.0, 32.0)),
 
                       // Main Harmoney Connection Button with animated shield
                       Center(
@@ -291,7 +315,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                         ),
                       ),
 
-                      SizedBox(height: 24.h.clamp(16.0, 36.0)),
+                      SizedBox(height: 16.h.clamp(12.0, 22.0)),
 
                       // Status Text
                       Center(
@@ -321,7 +345,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                         ),
                       ),
 
-                      SizedBox(height: 24.h.clamp(16.0, 32.0)),
+                      SizedBox(height: 18.h.clamp(12.0, 24.0)),
 
                       // Connected Country Card with Country Flag & Telemetry
                       if (status == VpnConnectionStatus.connected) ...[
@@ -338,7 +362,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                       _buildQuickCards(context, isPersian, server),
 
                       // Bottom clearance for floating glass navbar
-                      SizedBox(height: 85.h.clamp(70.0, 110.0)),
+                      SizedBox(height: 110.h.clamp(90.0, 130.0)),
                     ],
                   ),
                 ),
@@ -366,14 +390,17 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 server.country.isEmpty ||
                 server.country == 'Unknown'));
     final countryName = isUndetected
-        ? (isPersian ? 'نامشخص' : 'Unknown')
+        ? (localizedUiText(context, (isPersian ? 'نامشخص' : 'Unknown')))
         : (server.country.isNotEmpty
             ? server.country
-            : (isPersian ? 'مسیر خودکار' : 'Automatic route'));
+            : (localizedUiText(
+                context, (isPersian ? 'مسیر خودکار' : 'Automatic route'))));
     final cityName = server?.city ??
-        (isPersian
-            ? 'تونل ایمن و ترافیک رمزنگاری‌شده'
-            : 'Verified Secure Tunnel');
+        (localizedUiText(
+            context,
+            (isPersian
+                ? 'تونل ایمن و ترافیک رمزنگاری‌شده'
+                : 'Verified Secure Tunnel')));
 
     return Container(
       margin: EdgeInsets.only(bottom: 20.h.clamp(14.0, 26.0)),
@@ -475,7 +502,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                         ),
                       ),
                       child: LocalizedText(
-                        isPersian ? 'متصل' : 'CONNECTED',
+                        localizedUiText(
+                            context, (isPersian ? 'متصل' : 'CONNECTED')),
                         style: const TextStyle(
                           color: Color(0xFF00D4AA),
                           fontSize: 10,
@@ -500,7 +528,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                 if (publicIp != null && publicIp.isNotEmpty) ...[
                   const SizedBox(height: 3),
                   LocalizedText(
-                    '${isPersian ? 'IP خروجی' : 'Exit IP'}: $publicIp',
+                    '${localizedUiText(context, (isPersian ? 'IP خروجی' : 'Exit IP'))}: $publicIp',
                     textDirection: TextDirection.ltr,
                     style: TextStyle(
                       color: Colors.white54,
@@ -534,7 +562,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   LocalizedText(
                     _pingMs != null && _pingMs! > 0
                         ? '$_pingMs ms'
-                        : (isPersian ? 'فعال' : 'Online'),
+                        : (localizedUiText(
+                            context, (isPersian ? 'فعال' : 'Online'))),
                     style: TextStyle(
                       color: const Color(0xFF61F2C2),
                       fontSize: 13.sp.clamp(11.0, 14.0),
@@ -567,10 +596,23 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   ) {
     final ping = _pingMs;
     final (pingColor, pingLabel) = switch (ping) {
-      null => (Colors.white60, isPersian ? 'در حال سنجش...' : 'Measuring...'),
-      < 85 => (const Color(0xFF61F2C2), isPersian ? 'عالی' : 'Excellent'),
-      < 160 => (const Color(0xFFFFC46B), isPersian ? 'خوب' : 'Good'),
-      _ => (const Color(0xFFFF7E7E), isPersian ? 'متوسط' : 'Fair'),
+      null => (
+          Colors.white60,
+          localizedUiText(
+              context, (isPersian ? 'در حال سنجش...' : 'Measuring...'))
+        ),
+      < 85 => (
+          const Color(0xFF61F2C2),
+          localizedUiText(context, (isPersian ? 'عالی' : 'Excellent'))
+        ),
+      < 160 => (
+          const Color(0xFFFFC46B),
+          localizedUiText(context, (isPersian ? 'خوب' : 'Good'))
+        ),
+      _ => (
+          const Color(0xFFFF7E7E),
+          localizedUiText(context, (isPersian ? 'متوسط' : 'Fair'))
+        ),
     };
 
     final hasIp = state.publicIp != null && state.publicIp!.isNotEmpty;
@@ -613,9 +655,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               // Download Block
               Expanded(
                 child: Tooltip(
-                  message: isPersian
-                      ? 'ضربه بزنید برای آزمون سرعت کامل'
-                      : 'Tap to run full speed test',
+                  message: localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'ضربه بزنید برای آزمون سرعت کامل'
+                          : 'Tap to run full speed test')),
                   child: InkWell(
                     onTap: widget.onOpenSpeedTest,
                     borderRadius: BorderRadius.circular(14),
@@ -659,7 +703,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 LocalizedText(
-                                  isPersian ? 'دانلود' : 'Download',
+                                  localizedUiText(context,
+                                      (isPersian ? 'دانلود' : 'Download')),
                                   style: TextStyle(
                                     color: Colors.white60,
                                     fontSize: 10.5.sp.clamp(9.5, 12.0),
@@ -667,16 +712,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                LocalizedText(
-                                  TrafficDataSnapshot.formatSpeed(
-                                    _traffic.rxBps,
-                                  ),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14.sp.clamp(12.0, 16.0),
-                                    fontFamily: 'Lato',
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.3,
+                                ValueListenableBuilder<TrafficDataSnapshot>(
+                                  valueListenable: _trafficNotifier,
+                                  builder: (context, traffic, _) =>
+                                      LocalizedText(
+                                    TrafficDataSnapshot.formatSpeed(
+                                      traffic.rxBps,
+                                    ),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14.sp.clamp(12.0, 16.0),
+                                      fontFamily: 'Lato',
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.3,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -692,9 +741,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               // Upload Block
               Expanded(
                 child: Tooltip(
-                  message: isPersian
-                      ? 'ضربه بزنید برای آزمون سرعت کامل'
-                      : 'Tap to run full speed test',
+                  message: localizedUiText(
+                      context,
+                      (isPersian
+                          ? 'ضربه بزنید برای آزمون سرعت کامل'
+                          : 'Tap to run full speed test')),
                   child: InkWell(
                     onTap: widget.onOpenSpeedTest,
                     borderRadius: BorderRadius.circular(14),
@@ -738,7 +789,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 LocalizedText(
-                                  isPersian ? 'آپلود' : 'Upload',
+                                  localizedUiText(context,
+                                      (isPersian ? 'آپلود' : 'Upload')),
                                   style: TextStyle(
                                     color: Colors.white60,
                                     fontSize: 10.5.sp.clamp(9.5, 12.0),
@@ -746,16 +798,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                LocalizedText(
-                                  TrafficDataSnapshot.formatSpeed(
-                                    _traffic.txBps,
-                                  ),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14.sp.clamp(12.0, 16.0),
-                                    fontFamily: 'Lato',
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.3,
+                                ValueListenableBuilder<TrafficDataSnapshot>(
+                                  valueListenable: _trafficNotifier,
+                                  builder: (context, traffic, _) =>
+                                      LocalizedText(
+                                    TrafficDataSnapshot.formatSpeed(
+                                      traffic.txBps,
+                                    ),
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14.sp.clamp(12.0, 16.0),
+                                      fontFamily: 'Lato',
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: 0.3,
+                                    ),
                                   ),
                                 ),
                               ],
@@ -777,9 +833,11 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             children: [
               // Interactive Ping Pill
               Tooltip(
-                message: isPersian
-                    ? 'برای تازه‌سازی پینگ کلیک کنید'
-                    : 'Tap to re-test latency',
+                message: localizedUiText(
+                    context,
+                    (isPersian
+                        ? 'برای تازه‌سازی پینگ کلیک کنید'
+                        : 'Tap to re-test latency')),
                 child: InkWell(
                   onTap: _refreshPing,
                   borderRadius: BorderRadius.circular(10),
@@ -846,7 +904,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               // Copyable IP Pill
               if (hasIp)
                 Tooltip(
-                  message: isPersian ? 'کپی آدرس IP' : 'Copy Public IP',
+                  message: localizedUiText(
+                      context, (isPersian ? 'کپی آدرس IP' : 'Copy Public IP')),
                   child: InkWell(
                     onTap: () => _copyIp(state.publicIp!),
                     borderRadius: BorderRadius.circular(10),
@@ -880,7 +939,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                           const SizedBox(width: 6),
                           LocalizedText(
                             _copiedIp
-                                ? (isPersian ? 'کپی شد!' : 'Copied!')
+                                ? (localizedUiText(context,
+                                    (isPersian ? 'کپی شد!' : 'Copied!')))
                                 : 'IP: ${state.publicIp}',
                             textDirection: TextDirection.ltr,
                             style: TextStyle(
@@ -909,87 +969,83 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     bool isPersian,
     VpnServer? server,
   ) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF123D50).withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
-          width: 1,
+    return Column(
+      children: [
+        // Row 1: Split Tunneling & Iran Domestic Bypass
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionTile(
+                icon: Icons.alt_route_rounded,
+                iconColor: const Color(0xFFFFC46B),
+                title: localizedUiText(context,
+                    (isPersian ? 'دورزدن سایت‌های داخلی' : 'Domestic Bypass')),
+                subtitle: localizedUiText(context,
+                    (isPersian ? 'ترافیک ایران مستقیم' : 'Direct IR routes')),
+                onTap: widget.onOpenProtection,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionTile(
+                icon: Icons.shield_outlined,
+                iconColor: widget.appState.killSwitch
+                    ? const Color(0xFF61F2C2)
+                    : Colors.white54,
+                title: localizedUiText(
+                    context, (isPersian ? 'کیل‌سوئیچ امن' : 'Kill Switch')),
+                subtitle: widget.appState.killSwitch
+                    ? (localizedUiText(
+                        context, (isPersian ? 'فعال و محافظت‌شده' : 'Active')))
+                    : (localizedUiText(
+                        context, (isPersian ? 'غیرفعال' : 'Disabled'))),
+                onTap: () async {
+                  await widget.appState.setKillSwitch(
+                    !widget.appState.killSwitch,
+                  );
+                  ref
+                      .read(vpnCoreProvider)
+                      .setKillSwitch(widget.appState.killSwitch);
+                },
+              ),
+            ),
+          ],
         ),
-      ),
-      child: Column(
-        children: [
-          // Row 1: Split Tunneling & Iran Domestic Bypass
-          Row(
-            children: [
-              Expanded(
-                child: _QuickActionTile(
-                  icon: Icons.alt_route_rounded,
-                  iconColor: const Color(0xFFFFC46B),
-                  title:
-                      isPersian ? 'دورزدن سایت‌های داخلی' : 'Domestic Bypass',
-                  subtitle:
-                      isPersian ? 'ترافیک ایران مستقیم' : 'Direct IR routes',
-                  onTap: widget.onOpenProtection,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionTile(
-                  icon: Icons.shield_outlined,
-                  iconColor: widget.appState.killSwitch
-                      ? const Color(0xFF61F2C2)
-                      : Colors.white54,
-                  title: isPersian ? 'کیل‌سوئیچ امن' : 'Kill Switch',
-                  subtitle: widget.appState.killSwitch
-                      ? (isPersian ? 'فعال و محافظت‌شده' : 'Active')
-                      : (isPersian ? 'غیرفعال' : 'Disabled'),
-                  onTap: () async {
-                    await widget.appState.setKillSwitch(
-                      !widget.appState.killSwitch,
-                    );
-                    ref
-                        .read(vpnCoreProvider)
-                        .setKillSwitch(widget.appState.killSwitch);
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
+        const SizedBox(height: 12),
 
-          // Row 2: Speed Test & Network Diagnostics
-          Row(
-            children: [
-              Expanded(
-                child: _QuickActionTile(
-                  icon: Icons.speed_rounded,
-                  iconColor: const Color(0xFF72D9FF),
-                  title: isPersian ? 'تست سرعت و کیفیت' : 'Speed Test',
-                  subtitle: isPersian
-                      ? 'سنجش پینگ و پهنای‌باند'
-                      : 'Measure latency & speed',
-                  onTap: widget.onOpenSpeedTest,
-                ),
+        // Row 2: Speed Test & Network Diagnostics
+        Row(
+          children: [
+            Expanded(
+              child: _QuickActionTile(
+                icon: Icons.speed_rounded,
+                iconColor: const Color(0xFF72D9FF),
+                title: localizedUiText(
+                    context, (isPersian ? 'تست سرعت و کیفیت' : 'Speed Test')),
+                subtitle: localizedUiText(
+                    context,
+                    (isPersian
+                        ? 'سنجش پینگ و پهنای‌باند'
+                        : 'Measure latency & speed')),
+                onTap: widget.onOpenSpeedTest,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionTile(
-                  icon: Icons.hub_rounded,
-                  iconColor: const Color(0xFFB572FF),
-                  title: isPersian ? 'سرویس اتصال' : 'Connection service',
-                  subtitle: widget.appState.provider == 'firetunnel'
-                      ? 'Firefox VPN'
-                      : (server?.country ?? 'Harmoney Smart'),
-                  onTap: widget.onOpenLocations,
-                ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _QuickActionTile(
+                icon: Icons.hub_rounded,
+                iconColor: const Color(0xFFB572FF),
+                title: localizedUiText(context,
+                    (isPersian ? 'سرویس اتصال' : 'Connection service')),
+                subtitle: widget.appState.provider == 'firetunnel'
+                    ? 'Firefox VPN'
+                    : (server?.country ?? 'Harmoney Smart'),
+                onTap: widget.onOpenLocations,
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -1005,46 +1061,62 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   String _getStatusTitle(VpnConnectionStatus status, bool isPersian) {
     return switch (status) {
-      VpnConnectionStatus.connected =>
-        isPersian ? 'متصل و محافظت‌شده' : 'Connected & Protected',
+      VpnConnectionStatus.connected => localizedUiText(
+          context, (isPersian ? 'متصل و محافظت‌شده' : 'Connected & Protected')),
       VpnConnectionStatus.connecting ||
       VpnConnectionStatus.preparing ||
       VpnConnectionStatus.discovering =>
-        isPersian ? 'در حال برقراری ارتباط...' : 'Connecting...',
+        localizedUiText(context,
+            (isPersian ? 'در حال برقراری ارتباط...' : 'Connecting...')),
       VpnConnectionStatus.authenticating ||
       VpnConnectionStatus.verifying ||
       VpnConnectionStatus.reconnecting ||
       VpnConnectionStatus.recovering =>
-        isPersian
-            ? 'در حال اعتبارسنجی و دورزدن...'
-            : 'Authenticating & Bypassing...',
+        localizedUiText(
+            context,
+            (isPersian
+                ? 'در حال اعتبارسنجی و دورزدن...'
+                : 'Authenticating & Bypassing...')),
       VpnConnectionStatus.error ||
       VpnConnectionStatus.failed =>
-        isPersian ? 'خطا در اتصال' : 'Connection Failed',
+        localizedUiText(
+            context, (isPersian ? 'خطا در اتصال' : 'Connection Failed')),
       VpnConnectionStatus.disconnecting ||
       VpnConnectionStatus.cancelling =>
-        isPersian ? 'در حال قطع ارتباط...' : 'Disconnecting...',
-      _ => isPersian ? 'آماده برای اتصال' : 'Ready to Connect',
+        localizedUiText(
+            context, (isPersian ? 'در حال قطع ارتباط...' : 'Disconnecting...')),
+      _ => localizedUiText(
+          context, (isPersian ? 'آماده برای اتصال' : 'Ready to Connect')),
     };
   }
 
   String _getStatusSubtitle(VpnConnectionStatus status, bool isPersian) {
     return switch (status) {
-      VpnConnectionStatus.connected => isPersian
-          ? 'تمام ترافیک شما رمزنگاری شده و ایمن است'
-          : 'All your traffic is encrypted and anonymous',
+      VpnConnectionStatus.connected => localizedUiText(
+          context,
+          (isPersian
+              ? 'تمام ترافیک شما رمزنگاری شده و ایمن است'
+              : 'All your traffic is encrypted and anonymous')),
       VpnConnectionStatus.connecting ||
       VpnConnectionStatus.preparing ||
       VpnConnectionStatus.authenticating =>
-        isPersian
-            ? 'در حال پیدا کردن سریع‌ترین مسیر ضدفیلتر...'
-            : 'Finding the fastest censorship-resistant route...',
-      VpnConnectionStatus.error || VpnConnectionStatus.failed => isPersian
-          ? 'برای تلاش مجدد روی دکمه ضربه بزنید'
-          : 'Tap the button to reconnect',
-      _ => isPersian
-          ? 'جهت اتصال به اینترنت آزاد و امن، دکمه را لمس کنید'
-          : 'Tap the shield button to secure your internet',
+        localizedUiText(
+            context,
+            (isPersian
+                ? 'در حال پیدا کردن سریع‌ترین مسیر ضدفیلتر...'
+                : 'Finding the fastest censorship-resistant route...')),
+      VpnConnectionStatus.error ||
+      VpnConnectionStatus.failed =>
+        localizedUiText(
+            context,
+            (isPersian
+                ? 'برای تلاش مجدد روی دکمه ضربه بزنید'
+                : 'Tap the button to reconnect')),
+      _ => localizedUiText(
+          context,
+          (isPersian
+              ? 'جهت اتصال به اینترنت آزاد و امن، دکمه را لمس کنید'
+              : 'Tap the shield button to secure your internet')),
     };
   }
 }
@@ -1112,25 +1184,34 @@ class _QuickActionTileState extends State<_QuickActionTile>
             curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: _isHovered
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.white.withValues(alpha: 0.04),
-              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: _isHovered ? 0.12 : 0.07),
+                  const Color(0xFF09222E).withValues(alpha: 0.55),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(18),
               border: Border.all(
                 color: _isHovered
-                    ? widget.iconColor.withValues(alpha: 0.5)
-                    : Colors.white.withValues(alpha: 0.06),
-                width: 1.2,
+                    ? widget.iconColor.withValues(alpha: 0.6)
+                    : Colors.white.withValues(alpha: 0.14),
+                width: 1.0,
               ),
-              boxShadow: _isHovered
-                  ? [
-                      BoxShadow(
-                        color: widget.iconColor.withValues(alpha: 0.18),
-                        blurRadius: 14,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]
-                  : null,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
+                ),
+                if (_isHovered)
+                  BoxShadow(
+                    color: widget.iconColor.withValues(alpha: 0.20),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+              ],
             ),
             child: Row(
               children: [
@@ -1162,10 +1243,11 @@ class _QuickActionTileState extends State<_QuickActionTile>
                         widget.title,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 13.sp.clamp(11.0, 15.0),
+                          fontSize: 12.sp.clamp(10.5, 14.0),
                           fontWeight: FontWeight.w700,
+                          height: 1.25,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
@@ -1173,7 +1255,8 @@ class _QuickActionTileState extends State<_QuickActionTile>
                         widget.subtitle,
                         style: TextStyle(
                           color: _isHovered ? Colors.white70 : Colors.white54,
-                          fontSize: 11.sp.clamp(9.0, 13.0),
+                          fontSize: 10.5.sp.clamp(9.0, 12.0),
+                          height: 1.2,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

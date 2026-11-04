@@ -225,9 +225,10 @@ namespace
 } // namespace
 
 VPNChannelHandler::VPNChannelHandler(FlBinaryMessenger *messenger,
-                                     GtkWindow * /*window*/,
+                                     GtkWindow *window,
                                      SystemTray *system_tray)
     : messenger_(messenger),
+      window_(window),
       system_tray_(system_tray),
       vpn_status_("disconnected"),
       method_channel_(nullptr),
@@ -414,7 +415,7 @@ void VPNChannelHandler::HandleProgressMessage(const std::string &msg)
         if (system_tray_)
         {
             system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Connected);
-            system_tray_->UpdateTooltip("Harmoney - Connected");
+            system_tray_->UpdateStatusTooltip("connected", "Connected");
             system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Disconnect);
         }
 
@@ -437,7 +438,7 @@ void VPNChannelHandler::HandleProgressMessage(const std::string &msg)
         if (system_tray_)
         {
             system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Failed);
-            system_tray_->UpdateTooltip("Harmoney - Error");
+            system_tray_->UpdateStatusTooltip("error", "Error");
             system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Error);
         }
 
@@ -459,7 +460,7 @@ void VPNChannelHandler::HandleProgressMessage(const std::string &msg)
         if (system_tray_)
         {
             system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Standby);
-            system_tray_->UpdateTooltip("Harmoney - Disconnected");
+            system_tray_->UpdateStatusTooltip("disconnected", "Disconnected");
             system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Connect);
         }
 
@@ -485,7 +486,41 @@ void VPNChannelHandler::HandleMethodCall(FlMethodChannel *channel,
 
     try
     {
-        if (strcmp(method, "connect") == 0)
+        if (strcmp(method, "quitApplication") == 0)
+        {
+            FinishWithSuccess(method_call, fl_value_new_null());
+            if (self->window_)
+            {
+                g_idle_add([](gpointer data) -> gboolean {
+                    gtk_widget_destroy(GTK_WIDGET(data));
+                    return G_SOURCE_REMOVE;
+                }, self->window_);
+            }
+        }
+        else if (strcmp(method, "updateTrayLabels") == 0)
+        {
+            if (self->system_tray_)
+            {
+                static const char *keys[] = {
+                    "appName", "openApplication", "chooseServer", "preferences",
+                    "startupOptions", "launchOnStartup", "autoConnect", "soundEffect",
+                    "startMinimized", "forceClose", "serviceMode", "proxyService",
+                    "systemProxy", "vpnModeUnavailable", "introduction", "speedTest",
+                    "logs", "exit", "connect", "disconnect", "connected",
+                    "disconnected", "connecting", "disconnecting", "error", "ready",
+                    "automatic"};
+                std::map<std::string, std::string> labels;
+                FlValue *args = fl_method_call_get_args(method_call);
+                for (const char *key : keys)
+                {
+                    const std::string value = LookupString(args, key);
+                    if (!value.empty()) labels.emplace(key, value);
+                }
+                self->system_tray_->SetLabels(labels);
+            }
+            FinishWithSuccess(method_call, fl_value_new_null());
+        }
+        else if (strcmp(method, "connect") == 0)
         {
             FinishWithError(method_call, "SYSTEM_HELPER_REQUIRED", "Use the installed Harmoney system VPN helper.");
         }
@@ -500,7 +535,7 @@ void VPNChannelHandler::HandleMethodCall(FlMethodChannel *channel,
             {
                 self->system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Disconnecting);
                 self->system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Connecting);
-                self->system_tray_->UpdateTooltip("Harmoney - Disconnecting ...");
+                self->system_tray_->UpdateStatusTooltip("disconnecting", "Disconnecting…");
             }
 
             self->SendStatus("disconnecting");
@@ -517,7 +552,7 @@ void VPNChannelHandler::HandleMethodCall(FlMethodChannel *channel,
             if (self->system_tray_)
             {
                 self->system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Standby);
-                self->system_tray_->UpdateTooltip("Harmoney - Disconnected");
+                self->system_tray_->UpdateStatusTooltip("disconnected", "Disconnected");
                 self->system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Connect);
             }
 
@@ -680,7 +715,7 @@ void VPNChannelHandler::HandleMethodCall(FlMethodChannel *channel,
             if (self->system_tray_)
             {
                 self->system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Connecting);
-                self->system_tray_->UpdateTooltip("Harmoney - Connecting ...");
+                self->system_tray_->UpdateStatusTooltip("connecting", "Connecting");
                 self->system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Connecting);
             }
 
@@ -697,7 +732,7 @@ void VPNChannelHandler::HandleMethodCall(FlMethodChannel *channel,
             {
                 self->system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Disconnecting);
                 self->system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Connecting);
-                self->system_tray_->UpdateTooltip("Harmoney - Disconnecting ...");
+                self->system_tray_->UpdateStatusTooltip("disconnecting", "Disconnecting…");
             }
 
             self->SendStatus("disconnecting");
@@ -714,7 +749,7 @@ void VPNChannelHandler::HandleMethodCall(FlMethodChannel *channel,
             {
                 self->system_tray_->UpdateConnectionStatus(SystemTray::ConnectionStatus::Connect);
                 self->system_tray_->UpdateIcon(SystemTray::TrayIconStatus::Standby);
-                self->system_tray_->UpdateTooltip("Harmoney - Disconnected");
+                self->system_tray_->UpdateStatusTooltip("disconnected", "Disconnected");
             }
 
             self->SendStatus("disconnected");

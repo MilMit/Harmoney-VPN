@@ -16,7 +16,10 @@ class WindowsStartupScheduler {
     return result.exitCode == 0;
   }
 
-  static Future<void> setEnabled(bool enabled) async {
+  static Future<void> setEnabled(
+    bool enabled, {
+    bool startMinimized = false,
+  }) async {
     if (!Platform.isWindows) return;
     if (!enabled) {
       if (!await isEnabled()) return;
@@ -40,9 +43,11 @@ class WindowsStartupScheduler {
     final executable = Platform.resolvedExecutable;
     final executableDirectory = File(executable).parent.path;
     String quotePowerShell(String value) => "'${value.replaceAll("'", "''")}'";
+    final startMinimizedArgument =
+        startMinimized ? " -ArgumentList '--start-minimized'" : '';
     final launchCommand =
         'Start-Process -FilePath ${quotePowerShell(executable)} '
-        '-WorkingDirectory ${quotePowerShell(executableDirectory)}';
+        '-WorkingDirectory ${quotePowerShell(executableDirectory)}$startMinimizedArgument';
     final result = await Process.run('schtasks.exe', [
       '/Create',
       '/TN',

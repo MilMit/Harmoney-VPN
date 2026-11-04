@@ -217,7 +217,16 @@ static void HandleTrayAction(SystemTray::TrayAction action)
     break;
 
   case SystemTray::TrayAction::Exit:
-    if (g_main_window)
+    if (g_vpn_channel_handler)
+    {
+      g_vpn_channel_handler->InvokeMethod("quitApplication");
+      g_timeout_add_seconds(12, [](gpointer) -> gboolean {
+        if (g_main_window)
+          gtk_widget_destroy(GTK_WIDGET(g_main_window));
+        return G_SOURCE_REMOVE;
+      }, nullptr);
+    }
+    else if (g_main_window)
     {
       gtk_widget_destroy(GTK_WIDGET(g_main_window));
     }
@@ -333,7 +342,7 @@ static void my_application_activate(GApplication *application)
   g_system_tray = new SystemTray();
   g_system_tray->Initialize(window, HandleTrayAction);
   g_system_tray->UpdateIcon(SystemTray::TrayIconStatus::Standby);
-  g_system_tray->UpdateTooltip("Harmoney - Ready");
+  g_system_tray->UpdateStatusTooltip("ready", "Ready");
 
   harmoney_core::LogMessage("my_application: System tray initialized");
 

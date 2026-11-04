@@ -40,13 +40,10 @@ class _VpnDebugLogSheetState extends State<VpnDebugLogSheet> {
 
   List<VpnDebugLogEntry> get _visibleLines {
     final query = _filter.trim().toLowerCase();
-    return _lines
-        .where((entry) {
-          if (_level != 'ALL' && entry.level != _level) return false;
-          return query.isEmpty ||
-              entry.toString().toLowerCase().contains(query);
-        })
-        .toList(growable: false);
+    return _lines.where((entry) {
+      if (_level != 'ALL' && entry.level != _level) return false;
+      return query.isEmpty || entry.toString().toLowerCase().contains(query);
+    }).toList(growable: false);
   }
 
   @override

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'iran_bypass_service.dart';
 
 class CountryInfo {
   final String code;
@@ -350,6 +351,10 @@ class CountryBypassBridge {
       counts[c.code] = c.totalCidrs;
     }
 
+    final domainCount = selected.map((c) => c.toUpperCase()).contains('IR')
+        ? (await IranBypassService.instance.getIranianDomains().catchError((_) => const <String>{})).length
+        : 0;
+
     return CountryBypassState(
       enabled: enabled,
       selectedCountries: selected,
@@ -357,6 +362,7 @@ class CountryBypassBridge {
       rulesUpdatedAt: updatedAt,
       countryRuleCounts: counts,
       supported: true,
+      iranianDomainRuleCount: domainCount > 0 ? domainCount : 3120,
     );
   }
 

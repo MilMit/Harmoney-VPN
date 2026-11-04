@@ -56,6 +56,7 @@ private:
     void SetupMethodChannel();
 
     FlBinaryMessenger *messenger_;
+    GtkWindow *window_;
     SystemTray *system_tray_;
 
     std::string vpn_status_;

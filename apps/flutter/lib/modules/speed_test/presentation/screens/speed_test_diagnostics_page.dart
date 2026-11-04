@@ -1,5 +1,7 @@
+import '../../../../core/vpn_core.dart';
+import '../../../../shared/layout/main_screen_background.dart';
+import 'dart:ui';
 import 'dart:async';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +11,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../../../../core/network_speed_test.dart';
 import '../../../../features/diagnostics/diagnostics_page.dart';
 import '../../../../features/statistics/statistics_page.dart';
-import '../../../../features/shared/harmoney_pro_download_card.dart';
 import '../painters/animated_grid_painter.dart';
 import '../painters/semicircular_divider_painter.dart';
 import '../painters/semicircular_progress_painter.dart';
@@ -161,13 +162,13 @@ class _SpeedTestDiagnosticsPageState
             const Icon(Icons.check_circle_rounded, color: Color(0xFF00D4AA)),
             const SizedBox(width: 10),
             LocalizedText(
-              isPersian
-                  ? 'گزارش تست سرعت در کلیپ‌بورد کپی شد!'
-                  : 'Speed report copied to clipboard!',
+              localizedUiText(
+                  context,
+                  (isPersian
+                      ? 'گزارش تست سرعت در کلیپ‌بورد کپی شد!'
+                      : 'Speed report copied to clipboard!')),
               style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -188,9 +189,8 @@ class _SpeedTestDiagnosticsPageState
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: const Color(0xFF09202E),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(28),
-              ),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(28)),
               border: Border.all(
                 color: const Color(0xFF00D4AA).withValues(alpha: 0.35),
                 width: 1.2,
@@ -216,15 +216,15 @@ class _SpeedTestDiagnosticsPageState
                       children: [
                         Row(
                           children: [
-                            const Icon(
-                              Icons.history_rounded,
-                              color: Color(0xFF00D4AA),
-                            ),
+                            const Icon(Icons.history_rounded,
+                                color: Color(0xFF00D4AA)),
                             const SizedBox(width: 8),
                             LocalizedText(
-                              isPersian
-                                  ? 'تاریخچه تست‌های سرعت'
-                                  : 'Speed Test History',
+                              localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'تاریخچه تست‌های سرعت'
+                                      : 'Speed Test History')),
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -239,17 +239,13 @@ class _SpeedTestDiagnosticsPageState
                               await NetworkSpeedTest.clearHistory();
                               setModalState(() {});
                             },
-                            icon: const Icon(
-                              Icons.delete_sweep_rounded,
-                              size: 16,
-                              color: Colors.white60,
-                            ),
+                            icon: const Icon(Icons.delete_sweep_rounded,
+                                size: 16, color: Colors.white60),
                             label: LocalizedText(
-                              isPersian ? 'پاک‌سازی' : 'Clear',
+                              localizedUiText(
+                                  context, (isPersian ? 'پاک‌سازی' : 'Clear')),
                               style: const TextStyle(
-                                color: Colors.white60,
-                                fontSize: 12,
-                              ),
+                                  color: Colors.white60, fontSize: 12),
                             ),
                           ),
                       ],
@@ -263,19 +259,19 @@ class _SpeedTestDiagnosticsPageState
                               child: Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Icon(
-                                    Icons.speed_rounded,
-                                    size: 48,
-                                    color: Colors.white.withValues(alpha: 0.2),
-                                  ),
+                                  Icon(Icons.speed_rounded,
+                                      size: 48,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.2)),
                                   const SizedBox(height: 10),
                                   LocalizedText(
-                                    isPersian
-                                        ? 'هنوز تستی ثبت نشده است.'
-                                        : 'No speed tests recorded yet.',
-                                    style: const TextStyle(
-                                      color: Colors.white38,
-                                    ),
+                                    localizedUiText(
+                                        context,
+                                        (isPersian
+                                            ? 'هنوز تستی ثبت نشده است.'
+                                            : 'No speed tests recorded yet.')),
+                                    style:
+                                        const TextStyle(color: Colors.white38),
                                   ),
                                 ],
                               ),
@@ -348,9 +344,8 @@ class _SpeedTestDiagnosticsPageState
                                             LocalizedText(
                                               'Ping: ${item.latencyMs.toStringAsFixed(0)}ms · Jitter: ${item.jitterMs.toStringAsFixed(1)}ms · ${item.streamingGrade}',
                                               style: const TextStyle(
-                                                color: Colors.white60,
-                                                fontSize: 11,
-                                              ),
+                                                  color: Colors.white60,
+                                                  fontSize: 11),
                                             ),
                                           ],
                                         ),
@@ -360,10 +355,9 @@ class _SpeedTestDiagnosticsPageState
                                             ? '${item.timestamp!.hour.toString().padLeft(2, '0')}:${item.timestamp!.minute.toString().padLeft(2, '0')}'
                                             : '',
                                         style: const TextStyle(
-                                          color: Colors.white38,
-                                          fontSize: 11,
-                                          fontFamily: 'Lato',
-                                        ),
+                                            color: Colors.white38,
+                                            fontSize: 11,
+                                            fontFamily: 'Lato'),
                                       ),
                                     ],
                                   ),
@@ -385,93 +379,124 @@ class _SpeedTestDiagnosticsPageState
   Widget build(BuildContext context) {
     final isPersian = Localizations.localeOf(context).languageCode == 'fa';
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(
-            horizontal: 18.w.clamp(14.0, 30.0),
-            vertical: 14.h.clamp(10.0, 22.0),
-          ),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 620),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Top 3-Tab Selector
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.1),
+    return MainScreenBackground(
+      status: VpnConnectionStatus.disconnected,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(
+              horizontal: 18.w.clamp(14.0, 30.0),
+              vertical: 14.h.clamp(10.0, 22.0),
+            ),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 620),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Top 3-Tab Selector
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(18),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [
+                                Colors.white.withValues(alpha: 0.12),
+                                const Color(0xFF08202D).withValues(alpha: 0.50),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.20),
+                              width: 1.0,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.25),
+                                blurRadius: 14,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _TabButton(
+                                  title: localizedUiText(
+                                      context,
+                                      (isPersian
+                                          ? 'تست سرعت'
+                                          : 'Speed & Grade')),
+                                  icon: Icons.speed_rounded,
+                                  selected: _tabIndex == 0,
+                                  onTap: () => setState(() => _tabIndex = 0),
+                                ),
+                              ),
+                              Expanded(
+                                child: _TabButton(
+                                  title: localizedUiText(
+                                      context,
+                                      (isPersian
+                                          ? 'آمار مصرف زنده'
+                                          : 'Live Traffic')),
+                                  icon: Icons.insights_rounded,
+                                  selected: _tabIndex == 1,
+                                  onTap: () => setState(() => _tabIndex = 1),
+                                ),
+                              ),
+                              Expanded(
+                                child: _TabButton(
+                                  title: localizedUiText(
+                                      context,
+                                      (isPersian
+                                          ? 'عیب‌یابی شبکه'
+                                          : 'Diagnostics')),
+                                  icon: Icons.hub_rounded,
+                                  selected: _tabIndex == 2,
+                                  onTap: () => setState(() => _tabIndex = 2),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _TabButton(
-                            title: isPersian ? 'تست سرعت' : 'Speed & Grade',
-                            icon: Icons.speed_rounded,
-                            selected: _tabIndex == 0,
-                            onTap: () => setState(() => _tabIndex = 0),
-                          ),
-                        ),
-                        Expanded(
-                          child: _TabButton(
-                            title:
-                                isPersian ? 'آمار مصرف زنده' : 'Live Traffic',
-                            icon: Icons.insights_rounded,
-                            selected: _tabIndex == 1,
-                            onTap: () => setState(() => _tabIndex = 1),
-                          ),
-                        ),
-                        Expanded(
-                          child: _TabButton(
-                            title: isPersian ? 'عیب‌یابی شبکه' : 'Diagnostics',
-                            icon: Icons.hub_rounded,
-                            selected: _tabIndex == 2,
-                            onTap: () => setState(() => _tabIndex = 2),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
 
-                  const SizedBox(height: 12),
-                  const HarmoneyProDownloadCard(),
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: ScaleTransition(
-                          scale: Tween<double>(
-                            begin: 0.98,
-                            end: 1.0,
-                          ).animate(animation),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: KeyedSubtree(
-                      key: ValueKey<int>(_tabIndex),
-                      child: switch (_tabIndex) {
-                        0 => _buildSpeedTestTab(isPersian),
-                        1 => const StatisticsPage(),
-                        _ => const DiagnosticsPage(),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween<double>(begin: 0.98, end: 1.0)
+                                .animate(animation),
+                            child: child,
+                          ),
+                        );
                       },
+                      child: KeyedSubtree(
+                        key: ValueKey<int>(_tabIndex),
+                        child: switch (_tabIndex) {
+                          0 => _buildSpeedTestTab(isPersian),
+                          1 => const StatisticsPage(isEmbedded: true),
+                          _ => const DiagnosticsPage(isEmbedded: true),
+                        },
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 90),
-                ],
+                    const SizedBox(height: 90),
+                  ],
+                ),
               ),
             ),
           ),
@@ -609,8 +634,7 @@ class _SpeedTestDiagnosticsPageState
                       minHeight: 6,
                       backgroundColor: Colors.white10,
                       valueColor: const AlwaysStoppedAnimation<Color>(
-                        Color(0xFF00D4AA),
-                      ),
+                          Color(0xFF00D4AA)),
                     ),
                   ),
                 ],
@@ -632,10 +656,8 @@ class _SpeedTestDiagnosticsPageState
             child: LineChart(
               LineChartData(
                 minY: 0,
-                maxY: (_liveSpots.reduce((a, b) => a > b ? a : b) * 1.25).clamp(
-                  10.0,
-                  1000.0,
-                ),
+                maxY: (_liveSpots.reduce((a, b) => a > b ? a : b) * 1.25)
+                    .clamp(10.0, 1000.0),
                 gridData: const FlGridData(show: false),
                 titlesData: const FlTitlesData(show: false),
                 borderData: FlBorderData(show: false),
@@ -698,37 +720,48 @@ class _SpeedTestDiagnosticsPageState
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _MetricItem(
-                label: isPersian ? 'پینگ' : 'Ping',
-                value: _lastResult != null
-                    ? '${_lastResult!.latencyMs.toStringAsFixed(0)} ms'
-                    : '-- ms',
-                icon: Icons.network_ping_rounded,
-                color: const Color(0xFFFFC46B),
+              Expanded(
+                child: _MetricItem(
+                  label: localizedUiText(context, (isPersian ? 'پینگ' : 'Ping')),
+                  value: _lastResult != null
+                      ? '${_lastResult!.latencyMs.toStringAsFixed(0)} ms'
+                      : '-- ms',
+                  icon: Icons.network_ping_rounded,
+                  color: const Color(0xFFFFC46B),
+                ),
               ),
-              _MetricItem(
-                label: isPersian ? 'نوسان (جیتر)' : 'Jitter',
-                value: _lastResult != null
-                    ? '${_lastResult!.jitterMs.toStringAsFixed(1)} ms'
-                    : '-- ms',
-                icon: Icons.waves_rounded,
-                color: const Color(0xFF72D9FF),
+              Expanded(
+                child: _MetricItem(
+                  label: localizedUiText(
+                      context, (isPersian ? 'نوسان (جیتر)' : 'Jitter')),
+                  value: _lastResult != null
+                      ? '${_lastResult!.jitterMs.toStringAsFixed(1)} ms'
+                      : '-- ms',
+                  icon: Icons.waves_rounded,
+                  color: const Color(0xFF72D9FF),
+                ),
               ),
-              _MetricItem(
-                label: isPersian ? 'دانلود' : 'Download',
-                value: _lastResult != null
-                    ? '${_lastResult!.downloadMbps.toStringAsFixed(1)} Mbps'
-                    : '-- Mbps',
-                icon: Icons.arrow_downward_rounded,
-                color: const Color(0xFF61F2C2),
+              Expanded(
+                child: _MetricItem(
+                  label: localizedUiText(
+                      context, (isPersian ? 'دانلود' : 'Download')),
+                  value: _lastResult != null
+                      ? '${_lastResult!.downloadMbps.toStringAsFixed(1)} Mbps'
+                      : '-- Mbps',
+                  icon: Icons.arrow_downward_rounded,
+                  color: const Color(0xFF61F2C2),
+                ),
               ),
-              _MetricItem(
-                label: isPersian ? 'آپلود' : 'Upload',
-                value: _lastResult != null
-                    ? '${_lastResult!.uploadMbps.toStringAsFixed(1)} Mbps'
-                    : '-- Mbps',
-                icon: Icons.arrow_upward_rounded,
-                color: const Color(0xFFB572FF),
+              Expanded(
+                child: _MetricItem(
+                  label:
+                      localizedUiText(context, (isPersian ? 'آپلود' : 'Upload')),
+                  value: _lastResult != null
+                      ? '${_lastResult!.uploadMbps.toStringAsFixed(1)} Mbps'
+                      : '-- Mbps',
+                  icon: Icons.arrow_upward_rounded,
+                  color: const Color(0xFFB572FF),
+                ),
               ),
             ],
           ),
@@ -749,21 +782,19 @@ class _SpeedTestDiagnosticsPageState
               children: [
                 Row(
                   children: [
-                    const Icon(
-                      Icons.workspace_premium_rounded,
-                      color: Color(0xFFFFC46B),
-                      size: 20,
-                    ),
+                    const Icon(Icons.workspace_premium_rounded,
+                        color: Color(0xFFFFC46B), size: 20),
                     const SizedBox(width: 8),
                     LocalizedText(
-                      isPersian
-                          ? 'ارزیابی هوشمند کیفیت سرویس‌ها'
-                          : 'Smart Service Suitability',
+                      localizedUiText(
+                          context,
+                          (isPersian
+                              ? 'ارزیابی هوشمند کیفیت سرویس‌ها'
+                              : 'Smart Service Suitability')),
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13),
                     ),
                   ],
                 ),
@@ -773,7 +804,8 @@ class _SpeedTestDiagnosticsPageState
                     Expanded(
                       child: _QualityPill(
                         icon: Icons.sports_esports_rounded,
-                        title: isPersian ? 'گیمینگ آنلاین' : 'Gaming',
+                        title: localizedUiText(
+                            context, (isPersian ? 'گیمینگ آنلاین' : 'Gaming')),
                         grade: _lastResult!.gamingGrade,
                         badgeColor: const Color(0xFF61F2C2),
                         desc: 'پایداری پینگ ${_lastResult!.gamingScore}%',
@@ -783,10 +815,12 @@ class _SpeedTestDiagnosticsPageState
                     Expanded(
                       child: _QualityPill(
                         icon: Icons.movie_filter_rounded,
-                        title: isPersian ? 'استریم ویدیو' : 'Streaming',
+                        title: localizedUiText(context,
+                            (isPersian ? 'استریم ویدیو' : 'Streaming')),
                         grade: _lastResult!.streamingGrade,
                         badgeColor: const Color(0xFF72D9FF),
-                        desc: isPersian ? 'بدون بافرینگ' : 'No Buffering',
+                        desc: localizedUiText(context,
+                            (isPersian ? 'بدون بافرینگ' : 'No Buffering')),
                       ),
                     ),
                   ],
@@ -797,24 +831,30 @@ class _SpeedTestDiagnosticsPageState
                     Expanded(
                       child: _QualityPill(
                         icon: Icons.phone_in_talk_rounded,
-                        title: isPersian ? 'تماس صوتی/تصویری' : 'Calls (VoIP)',
+                        title: localizedUiText(context,
+                            (isPersian ? 'تماس صوتی/تصویری' : 'Calls (VoIP)')),
                         grade: _lastResult!.videoCallQuality,
                         badgeColor: const Color(0xFFFFC46B),
-                        desc: isPersian
-                            ? 'واتساپ، زوم، تلگرام'
-                            : 'Zoom & Telegram',
+                        desc: localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'واتساپ، زوم، تلگرام'
+                                : 'Zoom & Telegram')),
                       ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: _QualityPill(
                         icon: Icons.shield_rounded,
-                        title: isPersian ? 'شاخص پایداری' : 'Stability Index',
+                        title: localizedUiText(context,
+                            (isPersian ? 'شاخص پایداری' : 'Stability Index')),
                         grade: '${_lastResult!.stabilityScore}%',
                         badgeColor: const Color(0xFFB572FF),
-                        desc: isPersian
-                            ? 'پکت‌لاس نزدیک صفر'
-                            : 'Zero packet loss',
+                        desc: localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'پکت‌لاس نزدیک صفر'
+                                : 'Zero packet loss')),
                       ),
                     ),
                   ],
@@ -880,10 +920,13 @@ class _SpeedTestDiagnosticsPageState
                         const SizedBox(width: 8),
                         LocalizedText(
                           _testing
-                              ? (isPersian ? 'لغو تست' : 'Cancel Test')
-                              : (isPersian
-                                  ? 'شروع تست سرعت'
-                                  : 'Start Speed Test'),
+                              ? (localizedUiText(context,
+                                  (isPersian ? 'لغو تست' : 'Cancel Test')))
+                              : (localizedUiText(
+                                  context,
+                                  (isPersian
+                                      ? 'شروع تست سرعت'
+                                      : 'Start Speed Test'))),
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
@@ -910,58 +953,44 @@ class _SpeedTestDiagnosticsPageState
             children: [
               OutlinedButton.icon(
                 onPressed: () => _copyResultToClipboard(isPersian),
-                icon: const Icon(
-                  Icons.copy_rounded,
-                  size: 16,
-                  color: Color(0xFF61F2C2),
-                ),
+                icon: const Icon(Icons.copy_rounded,
+                    size: 16, color: Color(0xFF61F2C2)),
                 label: LocalizedText(
-                  isPersian ? 'کپی گزارش نتیجه' : 'Copy Report',
+                  localizedUiText(
+                      context, (isPersian ? 'کپی گزارش نتیجه' : 'Copy Report')),
                   style: const TextStyle(
-                    color: Color(0xFF61F2C2),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
+                      color: Color(0xFF61F2C2),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFF00D4AA), width: 1),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
+                      borderRadius: BorderRadius.circular(16)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
               const SizedBox(width: 12),
               OutlinedButton.icon(
                 onPressed: () => _showHistoryModal(isPersian),
-                icon: const Icon(
-                  Icons.history_rounded,
-                  size: 16,
-                  color: Colors.white70,
-                ),
+                icon: const Icon(Icons.history_rounded,
+                    size: 16, color: Colors.white70),
                 label: LocalizedText(
-                  isPersian ? 'تاریخچه تست‌ها' : 'History',
+                  localizedUiText(
+                      context, (isPersian ? 'تاریخچه تست‌ها' : 'History')),
                   style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                  ),
+                      color: Colors.white70,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13),
                 ),
                 style: OutlinedButton.styleFrom(
                   side: BorderSide(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    width: 1,
-                  ),
+                      color: Colors.white.withValues(alpha: 0.2), width: 1),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
+                      borderRadius: BorderRadius.circular(16)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
             ],
@@ -1081,7 +1110,10 @@ class _MetricItem extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color.withValues(alpha: 0.15),
-            border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
+            border: Border.all(
+              color: color.withValues(alpha: 0.4),
+              width: 1,
+            ),
           ),
           child: Icon(icon, color: color, size: 20),
         ),
@@ -1143,13 +1175,9 @@ class _QualityPill extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    LocalizedText(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 11,
-                      ),
-                    ),
+                    LocalizedText(title,
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 11)),
                     LocalizedText(
                       grade,
                       style: TextStyle(

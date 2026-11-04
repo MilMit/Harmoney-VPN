@@ -1,55 +1,85 @@
+import 'dart:convert';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 
-import 'inline_text_translations.dart';
+import '../l10n/app_localizations.dart';
+import '../l10n/app_localizations_lookup.dart';
 
-String _translateInlineText(String localeCode, String source) {
-  final exact = inlineTextTranslations[localeCode]?[source] ??
-      inlineAttributeTranslations[localeCode]?[source];
+String _arbKey(String prefix, String source) =>
+    '$prefix${sha256.convert(utf8.encode(source)).toString().substring(0, 16)}';
+
+String? _translateTemplate(
+  AppLocalizations l10n,
+  String source,
+  Map<String, String> templates,
+) {
+  for (final entry in templates.entries) {
+    final placeholders = RegExp(r'QZXVAR\d+QZX')
+        .allMatches(entry.key)
+        .map((match) => match.group(0)!)
+        .toList(growable: false);
+    if (placeholders.isEmpty) continue;
+
+    final translated = appLocalizationsInlineValue(l10n, entry.value);
+    if (translated == null) continue;
+    final translatedPlaceholders = RegExp(r'QZXVAR\d+QZX')
+        .allMatches(translated)
+        .map((match) => match.group(0)!)
+        .toSet();
+    if (!translatedPlaceholders.containsAll(placeholders) ||
+        !placeholders.toSet().containsAll(translatedPlaceholders)) {
+      continue;
+    }
+
+    final parts = entry.key.split(RegExp(r'QZXVAR\d+QZX'));
+    final pattern = '^${parts.map(RegExp.escape).join(r'([\s\S]*?)')}\$';
+    final match = RegExp(pattern).firstMatch(source);
+    if (match == null) continue;
+
+    var result = translated;
+    for (var index = 0; index < placeholders.length; index++) {
+      result = result.replaceAll(
+        placeholders[index],
+        match.group(index + 1) ?? '',
+      );
+    }
+    return result;
+  }
+  return null;
+}
+
+String _translateArbText(AppLocalizations l10n, String source) {
+  final exact = appLocalizationsInlineValue(
+        l10n,
+        _arbKey('inlineText_', source),
+      ) ??
+      appLocalizationsInlineValue(
+        l10n,
+        _arbKey('inlineAttribute_', source),
+      );
   if (exact != null) return exact;
 
-  final templates = [
-    inlineTextTemplateTranslations[localeCode],
-    inlineAttributeTemplateTranslations[localeCode],
-  ].whereType<Map<String, String>>();
+  final direct = appLocalizationsInlineValue(
+        l10n,
+        _arbKey('directFa_', source),
+      ) ??
+      appLocalizationsInlineValue(
+        l10n,
+        _arbKey('directEn_', source),
+      );
+  if (direct != null) return direct;
 
-  for (final map in templates) {
-    for (final entry in map.entries) {
-      final placeholders = RegExp(r'QZXVAR\d+QZX')
-          .allMatches(entry.key)
-          .map((match) => match.group(0)!)
-          .toList(growable: false);
-      if (placeholders.isEmpty) continue;
-      final translatedPlaceholders = RegExp(r'QZXVAR\d+QZX')
-          .allMatches(entry.value)
-          .map((match) => match.group(0)!)
-          .toSet();
-      if (!translatedPlaceholders.containsAll(placeholders) ||
-          !placeholders.toSet().containsAll(translatedPlaceholders)) {
-        continue;
-      }
-
-      final parts = entry.key.split(RegExp(r'QZXVAR\d+QZX'));
-      final pattern = '^${parts.map(RegExp.escape).join(r'([\s\S]*?)')}\$';
-      final match = RegExp(pattern).firstMatch(source);
-      if (match == null) continue;
-
-      var translated = entry.value;
-      for (var index = 0; index < placeholders.length; index++) {
-        translated = translated.replaceAll(
-          placeholders[index],
-          match.group(index + 1) ?? '',
-        );
-      }
-      return translated;
-    }
-  }
-
-  return source;
+  return _translateTemplate(l10n, source, inlineTextTemplateKeys) ??
+      _translateTemplate(l10n, source, inlineAttributeTemplateKeys) ??
+      _translateTemplate(l10n, source, directFaTemplateKeys) ??
+      _translateTemplate(l10n, source, directEnTemplateKeys) ??
+      source;
 }
 
 String localizedUiText(BuildContext context, String source) {
-  final languageCode = Localizations.maybeLocaleOf(context)?.languageCode;
-  return _translateInlineText(languageCode ?? 'en', source);
+  final l10n = AppLocalizations.of(context);
+  return l10n == null ? source : _translateArbText(l10n, source);
 }
 
 /// A [Text] widget that localizes literal UI copy using the active app locale.

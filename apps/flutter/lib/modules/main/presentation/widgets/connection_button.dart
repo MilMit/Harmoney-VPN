@@ -1,19 +1,20 @@
 import 'dart:async';
 import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lottie/lottie.dart';
 import 'package:path_drawing/path_drawing.dart';
 
 import 'package:milmit_vpn_client/app/localized_text.dart';
-
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/vpn_core.dart';
 
-/// Next-Generation Cyber-Glass Animated VPN Connection Button
-/// Features dynamic multi-phase concentric pulse rings, dual-direction rotating
-/// neon orbital halos, interactive spring physics, and real-time connected duration HUD.
+/// Professional Cyber-Glass Shield Connection Button
+/// Engineered for ultra-smooth 60/120 FPS performance with zero idle lag:
+/// - No heavy repeating animations or radar sweeps while connecting.
+/// - Single-shot holographic shockwave and lock-in spring on connection success.
+/// - Graceful fade-out transitions when disconnecting.
+/// - Single-shot crimson warning ripple and cyber recoil shake when connection fails.
 class ConnectionButton extends StatefulWidget {
   final VpnConnectionStatus status;
   final VoidCallback onTap;
@@ -32,12 +33,14 @@ class ConnectionButton extends StatefulWidget {
 
 class _ConnectionButtonState extends State<ConnectionButton>
     with TickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  late final AnimationController _rotationController;
+  late final AnimationController _connectSuccessController;
+  late final AnimationController _errorController;
   late final AnimationController _pressController;
 
-  late final Animation<double> _pulseAnimation;
-  late final Animation<double> _rotationAnimation;
+  late final Animation<double> _connectProgressAnimation;
+  late final Animation<double> _connectScaleAnimation;
+  late final Animation<double> _errorProgressAnimation;
+  late final Animation<double> _errorShakeAnimation;
   late final Animation<double> _pressScaleAnimation;
 
   Timer? _timer;
@@ -53,29 +56,77 @@ class _ConnectionButtonState extends State<ConnectionButton>
   }
 
   void _initAnimations() {
-    // Smooth breathing pulse animation (runs continuously for a living aura)
-    _pulseController = AnimationController(
+    // 1. Connection Success Animation (Single-shot, plays once on connect and stops)
+    _connectSuccessController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2400),
-    )..repeat(reverse: true);
-
-    _pulseAnimation = CurvedAnimation(
-      parent: _pulseController,
-      curve: Curves.easeInOutCubic,
+      duration: const Duration(milliseconds: 850),
     );
 
-    // Fast rotation for connecting / analyzing radar sweeps
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat();
-
-    _rotationAnimation = CurvedAnimation(
-      parent: _rotationController,
-      curve: Curves.linear,
+    _connectProgressAnimation = CurvedAnimation(
+      parent: _connectSuccessController,
+      curve: Curves.easeOutCubic,
     );
 
-    // Press scale animation for spring-like tactile feedback
+    // Tactile lock-in pop curve
+    _connectScaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 1.0, end: 1.07)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 38,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 1.07, end: 0.98)
+            .chain(CurveTween(curve: Curves.easeInOutCubic)),
+        weight: 34,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 0.98, end: 1.0)
+            .chain(CurveTween(curve: Curves.easeOutCubic)),
+        weight: 28,
+      ),
+    ]).animate(_connectSuccessController);
+
+    // 2. Connection Failed/Error Animation (Single-shot, plays once on fail and stops)
+    _errorController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 700),
+    );
+
+    _errorProgressAnimation = CurvedAnimation(
+      parent: _errorController,
+      curve: Curves.easeOutCubic,
+    );
+
+    // Subtle cyber recoil shake
+    _errorShakeAnimation = TweenSequence<double>([
+      TweenSequenceItem(
+        tween: Tween(begin: 0.0, end: -6.5)
+            .chain(CurveTween(curve: Curves.easeOutQuad)),
+        weight: 15,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: -6.5, end: 5.5)
+            .chain(CurveTween(curve: Curves.easeInOutQuad)),
+        weight: 20,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 5.5, end: -4.0)
+            .chain(CurveTween(curve: Curves.easeInOutQuad)),
+        weight: 20,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: -4.0, end: 2.5)
+            .chain(CurveTween(curve: Curves.easeInOutQuad)),
+        weight: 20,
+      ),
+      TweenSequenceItem(
+        tween: Tween(begin: 2.5, end: 0.0)
+            .chain(CurveTween(curve: Curves.easeInQuad)),
+        weight: 25,
+      ),
+    ]).animate(_errorController);
+
+    // 3. Press scale animation for spring tactile feedback
     _pressController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 120),
@@ -90,7 +141,28 @@ class _ConnectionButtonState extends State<ConnectionButton>
   void didUpdateWidget(covariant ConnectionButton oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.status != widget.status) {
+      _handleStatusTransition(oldWidget.status, widget.status);
       _handleTimerState(widget.status);
+    }
+  }
+
+  void _handleStatusTransition(
+      VpnConnectionStatus oldStatus, VpnConnectionStatus newStatus) {
+    if (newStatus == VpnConnectionStatus.connected) {
+      HapticFeedback.mediumImpact();
+      _errorController.stop();
+      _connectSuccessController.forward(from: 0.0);
+    } else if (newStatus == VpnConnectionStatus.failed ||
+        newStatus == VpnConnectionStatus.error ||
+        newStatus == VpnConnectionStatus.authRequired) {
+      HapticFeedback.heavyImpact();
+      _connectSuccessController.stop();
+      _errorController.forward(from: 0.0);
+    } else if (newStatus == VpnConnectionStatus.disconnected ||
+        newStatus == VpnConnectionStatus.idle) {
+      if (oldStatus == VpnConnectionStatus.connected) {
+        HapticFeedback.selectionClick();
+      }
     }
   }
 
@@ -114,7 +186,7 @@ class _ConnectionButtonState extends State<ConnectionButton>
     } else {
       _timer?.cancel();
       _timer = null;
-      _seconds = 0;
+      // Do not clear _formattedTime immediately to permit graceful fade-out
     }
   }
 
@@ -128,8 +200,8 @@ class _ConnectionButtonState extends State<ConnectionButton>
   @override
   void dispose() {
     _timer?.cancel();
-    _pulseController.dispose();
-    _rotationController.dispose();
+    _connectSuccessController.dispose();
+    _errorController.dispose();
     _pressController.dispose();
     super.dispose();
   }
@@ -137,16 +209,19 @@ class _ConnectionButtonState extends State<ConnectionButton>
   @override
   Widget build(BuildContext context) {
     final double buttonSize = 136.w.clamp(120.0, 160.0);
-    final double pulseMaxSize = 330.w.clamp(260.0, 350.0);
+    final double effectAreaSize = (buttonSize + 84.0).clamp(204.0, 250.0);
 
     final isConnected = widget.status == VpnConnectionStatus.connected;
-    final isTransitioning =
-        widget.status == VpnConnectionStatus.connecting ||
+    final isTransitioning = widget.status == VpnConnectionStatus.connecting ||
         widget.status == VpnConnectionStatus.authenticating ||
         widget.status == VpnConnectionStatus.preparing ||
         widget.status == VpnConnectionStatus.verifying ||
         widget.status == VpnConnectionStatus.reconnecting ||
-        widget.status == VpnConnectionStatus.disconnecting;
+        widget.status == VpnConnectionStatus.discovering ||
+        widget.status == VpnConnectionStatus.recovering;
+    final isError = widget.status == VpnConnectionStatus.error ||
+        widget.status == VpnConnectionStatus.failed ||
+        widget.status == VpnConnectionStatus.authRequired;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -156,7 +231,10 @@ class _ConnectionButtonState extends State<ConnectionButton>
           onEnter: (_) => setState(() => _isHovered = true),
           onExit: (_) => setState(() => _isHovered = false),
           child: GestureDetector(
-            onTapDown: (_) => _pressController.forward(),
+            onTapDown: (_) {
+              HapticFeedback.lightImpact();
+              _pressController.forward();
+            },
             onTapUp: (_) {
               _pressController.reverse();
               widget.onTap();
@@ -165,42 +243,67 @@ class _ConnectionButtonState extends State<ConnectionButton>
             child: ScaleTransition(
               scale: _pressScaleAnimation,
               child: SizedBox(
-                width: pulseMaxSize,
-                height: pulseMaxSize,
+                width: effectAreaSize,
+                height: effectAreaSize,
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Concentric Animated Glow Rings
-                    AnimatedBuilder(
-                      animation: Listenable.merge([
-                        _pulseAnimation,
-                        _rotationAnimation,
-                      ]),
-                      builder: (context, _) => CustomPaint(
-                        size: Size.square(pulseMaxSize),
-                        painter: _CyberOrbPulsePainter(
-                          pulseProgress: _pulseAnimation.value,
-                          rotationProgress: _rotationAnimation.value,
-                          status: widget.status,
-                          isHovered: _isHovered,
+                    // Single-Shot Holographic Ripple / Error Shockwave
+                    RepaintBoundary(
+                      child: AnimatedOpacity(
+                        opacity: isConnected || isError ? 1 : 0,
+                        duration: const Duration(milliseconds: 380),
+                        curve: Curves.easeOut,
+                        child: AnimatedBuilder(
+                          animation: Listenable.merge([
+                            _connectSuccessController,
+                            _errorController,
+                          ]),
+                          builder: (context, _) => CustomPaint(
+                            size: Size.square(effectAreaSize),
+                            painter: _ConnectionBurstPainter(
+                              connectProgress: _connectProgressAnimation.value,
+                              isConnectAnimating:
+                                  _connectSuccessController.isAnimating,
+                              errorProgress: _errorProgressAnimation.value,
+                              isErrorAnimating: _errorController.isAnimating,
+                              showError: isError,
+                              baseRadius: buttonSize * 0.49,
+                            ),
+                          ),
                         ),
                       ),
                     ),
 
-                    // Rotating Cyber Orbitals (Dual Counter-Rotating Dashed Rings)
-                    if (isTransitioning)
-                      AnimatedBuilder(
-                        animation: _rotationAnimation,
-                        builder: (context, _) => CustomPaint(
-                          size: Size.square(buttonSize * 1.55),
-                          painter: _RotatingOrbitPainter(
-                            progress: _rotationAnimation.value,
+                    // Core Shield Button with Connect-Pop and Error-Shake
+                    AnimatedBuilder(
+                      animation: Listenable.merge([
+                        _connectScaleAnimation,
+                        _errorShakeAnimation,
+                      ]),
+                      builder: (context, child) {
+                        final double popScale =
+                            _connectSuccessController.isAnimating
+                                ? _connectScaleAnimation.value
+                                : 1.0;
+                        final double shakeOffset = _errorController.isAnimating
+                            ? _errorShakeAnimation.value
+                            : 0.0;
+                        return Transform.translate(
+                          offset: Offset(shakeOffset, 0),
+                          child: Transform.scale(
+                            scale: popScale,
+                            child: child,
                           ),
-                        ),
+                        );
+                      },
+                      child: _buildMainButton(
+                        buttonSize,
+                        isConnected,
+                        isTransitioning,
+                        isError,
                       ),
-
-                    // Core Shield Button
-                    _buildMainButton(buttonSize, isConnected, isTransitioning),
+                    ),
                   ],
                 ),
               ),
@@ -208,8 +311,28 @@ class _ConnectionButtonState extends State<ConnectionButton>
           ),
         ),
 
-        // Live Connected Duration HUD
-        if (isConnected) ...[const SizedBox(height: 12), _buildDurationHud()],
+        // Smooth Fade-out Duration HUD
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 380),
+          reverseDuration: const Duration(milliseconds: 380),
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SizeTransition(
+                sizeFactor: animation,
+                axisAlignment: -1.0,
+                child: child,
+              ),
+            );
+          },
+          child: isConnected
+              ? Padding(
+                  key: const ValueKey('hud_connected'),
+                  padding: const EdgeInsets.only(top: 10),
+                  child: _buildDurationHud(),
+                )
+              : const SizedBox.shrink(key: ValueKey('hud_none')),
+        ),
       ],
     );
   }
@@ -218,8 +341,11 @@ class _ConnectionButtonState extends State<ConnectionButton>
     double buttonSize,
     bool isConnected,
     bool isTransitioning,
+    bool isError,
   ) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubic,
       width: buttonSize,
       height: buttonSize,
       decoration: BoxDecoration(
@@ -228,13 +354,16 @@ class _ConnectionButtonState extends State<ConnectionButton>
           BoxShadow(
             color: isConnected
                 ? const Color(0xFF00F5B8)
-                      .withValues(alpha: _isHovered ? 0.45 : 0.30)
-                : (isTransitioning
-                      ? const Color(0xFFFFC46B).withValues(alpha: 0.35)
-                      : const Color(0xFF00D4AA)
-                            .withValues(alpha: _isHovered ? 0.28 : 0.15)),
-            blurRadius: isConnected ? 28 : 20,
-            spreadRadius: isConnected ? 2 : 0,
+                    .withValues(alpha: _isHovered ? 0.45 : 0.30)
+                : (isError
+                    ? const Color(0xFFFF5252).withValues(alpha: 0.40)
+                    : (isTransitioning
+                        ? const Color(0xFFFFC46B).withValues(alpha: 0.28)
+                        : const Color(0xFF00D4AA)
+                            .withValues(alpha: _isHovered ? 0.26 : 0.12))),
+            blurRadius:
+                isConnected ? 28 : (isError ? 24 : (isTransitioning ? 20 : 16)),
+            spreadRadius: isConnected ? 2 : (isError ? 1 : 0),
             offset: const Offset(0, 4),
           ),
           BoxShadow(
@@ -247,28 +376,17 @@ class _ConnectionButtonState extends State<ConnectionButton>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Base Shield Silhouette Vector
+          // Base Shield Outline Vector
           AppIcons.shieldAnime(width: buttonSize, height: buttonSize),
 
-          // High-Tech Neon Rotating Arc during connecting
-          if (isTransitioning)
-            AnimatedBuilder(
-              animation: _rotationAnimation,
-              builder: (context, _) => CustomPaint(
-                size: Size(buttonSize, buttonSize),
-                painter: ShieldLoadingPainter(
-                  progress: _rotationAnimation.value,
-                  size: buttonSize,
-                ),
-              ),
-            ),
-
-          // Clipped Interactive Shield Core
+          // Clipped Shield Core with smooth gradient transition
           Positioned.fill(
             child: ClipPath(
               clipper: SvgShieldClipper(size: buttonSize),
               clipBehavior: Clip.antiAlias,
-              child: Container(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeInOutCubic,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -278,23 +396,33 @@ class _ConnectionButtonState extends State<ConnectionButton>
                             const Color(0xFF00F5B8).withValues(alpha: 0.28),
                             const Color(0xFF093E48).withValues(alpha: 0.88),
                           ]
-                        : (isTransitioning
-                              ? [
-                                  const Color(0xFFFFC46B)
-                                      .withValues(alpha: 0.25),
-                                  const Color(0xFF33230A)
-                                      .withValues(alpha: 0.85),
-                                ]
-                              : [
-                                  const Color(0xFF133D50)
-                                      .withValues(alpha: 0.80),
-                                  const Color(0xFF071E2B)
-                                      .withValues(alpha: 0.95),
-                                ]),
+                        : (isError
+                            ? [
+                                const Color(0xFFFF5252).withValues(alpha: 0.25),
+                                const Color(0xFF381016).withValues(alpha: 0.90),
+                              ]
+                            : (isTransitioning
+                                ? [
+                                    const Color(0xFFFFC46B)
+                                        .withValues(alpha: 0.22),
+                                    const Color(0xFF2C200B)
+                                        .withValues(alpha: 0.85),
+                                  ]
+                                : [
+                                    const Color(0xFF133D50)
+                                        .withValues(alpha: 0.80),
+                                    const Color(0xFF071E2B)
+                                        .withValues(alpha: 0.95),
+                                  ])),
                   ),
                 ),
                 alignment: Alignment.center,
-                child: _buildButtonContent(buttonSize, isTransitioning),
+                child: _buildButtonContent(
+                  buttonSize,
+                  isConnected,
+                  isTransitioning,
+                  isError,
+                ),
               ),
             ),
           ),
@@ -303,47 +431,113 @@ class _ConnectionButtonState extends State<ConnectionButton>
     );
   }
 
-  Widget _buildButtonContent(double buttonSize, bool isTransitioning) {
-    final double iconSize = (buttonSize * 0.44).clamp(42.0, 68.0);
-    final double animSize = (buttonSize * 0.85).clamp(80.0, 130.0);
+  Widget _buildButtonContent(
+    double buttonSize,
+    bool isConnected,
+    bool isTransitioning,
+    bool isError,
+  ) {
+    final double iconSize = (buttonSize * 0.52).clamp(52.0, 82.0);
 
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        _buildStatusIcon(iconSize),
-        if (isTransitioning)
-          Lottie.asset(
-            'assets/lottie/scan.json',
-            width: animSize,
-            height: animSize,
-            fit: BoxFit.cover,
-            alignment: Alignment.center,
+    return AnimatedScale(
+      scale: isConnected ? 1.06 : 1.0,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutBack,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Ambient Glow behind emblem with smooth cross-fade
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 400),
+            curve: Curves.easeInOutCubic,
+            width: iconSize * 0.82,
+            height: iconSize * 0.82,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: isConnected
+                      ? const Color(0xFF00F5B8).withValues(alpha: 0.55)
+                      : (isError
+                          ? const Color(0xFFFF5252).withValues(alpha: 0.40)
+                          : (isTransitioning
+                              ? const Color(0xFFFFC46B).withValues(alpha: 0.35)
+                              : const Color(0xFF00E5FF)
+                                  .withValues(alpha: 0.25))),
+                  blurRadius: isConnected ? 28 : (isError ? 24 : 16),
+                  spreadRadius: isConnected ? 3 : 1,
+                ),
+              ],
+            ),
           ),
-      ],
-    );
-  }
 
-  Widget _buildStatusIcon(double iconSize) {
-    switch (widget.status) {
-      case VpnConnectionStatus.connected:
-        return AppIcons.harmoneyCheck(width: iconSize, height: iconSize);
-      case VpnConnectionStatus.error:
-      case VpnConnectionStatus.failed:
-      case VpnConnectionStatus.authRequired:
-        return AppIcons.harmoneyReload(width: iconSize, height: iconSize);
-      case VpnConnectionStatus.connecting:
-      case VpnConnectionStatus.authenticating:
-      case VpnConnectionStatus.preparing:
-      case VpnConnectionStatus.verifying:
-      case VpnConnectionStatus.reconnecting:
-      case VpnConnectionStatus.disconnecting:
-        return AppIcons.harmoneyLoading(width: iconSize, height: iconSize);
-      case VpnConnectionStatus.idle:
-      case VpnConnectionStatus.disconnected:
-      case VpnConnectionStatus.cancelling:
-      default:
-        return AppIcons.harmoneyStandby(width: iconSize, height: iconSize);
-    }
+          // Official Harmoney Emblem
+          Image.asset(
+            'assets/images/app_logo_emblem.png',
+            width: iconSize,
+            height: iconSize,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
+
+          // Dynamic Badge: Checkmark for Connected, Refresh for Error
+          Positioned(
+            bottom: 0,
+            right: 0,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              transitionBuilder: (child, animation) => FadeTransition(
+                opacity: animation,
+                child: ScaleTransition(scale: animation, child: child),
+              ),
+              child: isConnected
+                  ? Container(
+                      key: const ValueKey('badge_connected'),
+                      padding: const EdgeInsets.all(3.5),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF00F5B8),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Color(0xFF00F5B8),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check,
+                        size: 11,
+                        color: Color(0xFF071E2B),
+                      ),
+                    )
+                  : (isError
+                      ? Container(
+                          key: const ValueKey('badge_error'),
+                          padding: const EdgeInsets.all(3.5),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFFF5252),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Color(0xFFFF5252),
+                                blurRadius: 8,
+                                spreadRadius: 1,
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.refresh,
+                            size: 11,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const SizedBox.shrink(key: ValueKey('badge_none'))),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildDurationHud() {
@@ -368,7 +562,7 @@ class _ConnectionButtonState extends State<ConnectionButton>
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Pulsing emerald indicator
+          // Emerald pulsating beacon dot
           Container(
             width: 8,
             height: 8,
@@ -401,128 +595,112 @@ class _ConnectionButtonState extends State<ConnectionButton>
   }
 }
 
-/// Dynamic Concentric Ripple & Breathing Painter
-class _CyberOrbPulsePainter extends CustomPainter {
-  final double pulseProgress;
-  final double rotationProgress;
-  final VpnConnectionStatus status;
-  final bool isHovered;
+/// High-Performance Single-Shot Effect Painter
+/// Runs only during the single-shot success or error transitions and then halts completely.
+class _ConnectionBurstPainter extends CustomPainter {
+  final double connectProgress;
+  final bool isConnectAnimating;
+  final double errorProgress;
+  final bool isErrorAnimating;
+  final bool showError;
+  final double baseRadius;
 
-  const _CyberOrbPulsePainter({
-    required this.pulseProgress,
-    required this.rotationProgress,
-    required this.status,
-    required this.isHovered,
+  const _ConnectionBurstPainter({
+    required this.connectProgress,
+    required this.isConnectAnimating,
+    required this.errorProgress,
+    required this.isErrorAnimating,
+    required this.showError,
+    required this.baseRadius,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
-    final baseRadius = size.shortestSide / 3.0;
 
-    final isConnected = status == VpnConnectionStatus.connected;
-    final isTransitioning =
-        status == VpnConnectionStatus.connecting ||
-        status == VpnConnectionStatus.authenticating ||
-        status == VpnConnectionStatus.preparing ||
-        status == VpnConnectionStatus.verifying ||
-        status == VpnConnectionStatus.reconnecting;
-
-    final Color ringColor = isConnected
-        ? const Color(0xFF00F5B8)
-        : (isTransitioning ? const Color(0xFFFFC46B) : const Color(0xFF00D4AA));
-
-    const scales = [1.25, 1.05, 0.88, 0.72];
-    final hoverBonus = isHovered ? 0.08 : 0.0;
-
-    for (var i = 0; i < scales.length; i++) {
-      final double progressOffset = (pulseProgress + (i * 0.22)) % 1.0;
-      final double scale = scales[i] + (progressOffset * 0.16) + hoverBonus;
-
-      final double alpha = isConnected
-          ? ((1.0 - progressOffset) * 0.28).clamp(0.04, 0.32)
-          : (isTransitioning
-                ? ((1.0 - progressOffset) * 0.35).clamp(0.06, 0.40)
-                : ((1.0 - progressOffset) * 0.18).clamp(0.02, 0.22));
-
-      final paint = Paint()
-        ..color = ringColor.withValues(alpha: alpha)
+    // 1. Connection Success Holographic Burst (Emerald / Cyan)
+    if (isConnectAnimating && connectProgress > 0.0 && connectProgress < 1.0) {
+      // Primary Emerald Shockwave
+      final primaryRadius = baseRadius + (connectProgress * 42.0);
+      final primaryAlpha = ((1.0 - connectProgress) * 0.75).clamp(0.0, 1.0);
+      final primaryPaint = Paint()
+        ..color = const Color(0xFF00F5B8).withValues(alpha: primaryAlpha)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = (i == 0 ? 2.2 : 1.4)
+        ..strokeWidth = (1.0 - connectProgress) * 3.5 + 1.2
         ..isAntiAlias = true;
+      canvas.drawCircle(center, primaryRadius, primaryPaint);
 
-      canvas.drawCircle(center, baseRadius * scale, paint);
+      // Secondary Cyan Shockwave
+      if (connectProgress > 0.12) {
+        final delayedProgress =
+            ((connectProgress - 0.12) / 0.88).clamp(0.0, 1.0);
+        final secondaryRadius = baseRadius + (delayedProgress * 28.0);
+        final secondaryAlpha = ((1.0 - delayedProgress) * 0.55).clamp(0.0, 1.0);
+        final secondaryPaint = Paint()
+          ..color = const Color(0xFF00E5FF).withValues(alpha: secondaryAlpha)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = (1.0 - delayedProgress) * 2.4 + 1.0
+          ..isAntiAlias = true;
+        canvas.drawCircle(center, secondaryRadius, secondaryPaint);
+      }
+
+      // Quick Luminous Radial Flash Halo
+      if (connectProgress < 0.40) {
+        final flashAlpha =
+            (math.sin(connectProgress / 0.40 * math.pi) * 0.28).clamp(0.0, 1.0);
+        final flashPaint = Paint()
+          ..color = const Color(0xFF00F5B8).withValues(alpha: flashAlpha)
+          ..style = PaintingStyle.fill
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 22);
+        canvas.drawCircle(center, baseRadius * 1.05, flashPaint);
+      }
+    }
+
+    // 2. Connection Failed / Error Warning Halo (Crimson Red)
+    if (isErrorAnimating && errorProgress > 0.0 && errorProgress < 1.0) {
+      // Primary Crimson Shockwave Ring
+      final errRadius = baseRadius + (errorProgress * 40.0);
+      final errAlpha = ((1.0 - errorProgress) * 0.80).clamp(0.0, 1.0);
+      final errorPaint = Paint()
+        ..color = const Color(0xFFFF3B30).withValues(alpha: errAlpha)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = (1.0 - errorProgress) * 3.2 + 1.0
+        ..isAntiAlias = true;
+      canvas.drawCircle(center, errRadius, errorPaint);
+
+      // Soft Red Warning Flash
+      if (errorProgress < 0.45) {
+        final flashAlpha =
+            (math.sin(errorProgress / 0.45 * math.pi) * 0.26).clamp(0.0, 1.0);
+        final flashPaint = Paint()
+          ..color = const Color(0xFFFF5252).withValues(alpha: flashAlpha)
+          ..style = PaintingStyle.fill
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 20);
+        canvas.drawCircle(center, baseRadius * 1.05, flashPaint);
+      }
+    }
+
+    // Keep a subdued error ring visible after the warning ripple finishes.
+    // The fade above removes it after the next disconnect or retry.
+    if (showError && !isErrorAnimating) {
+      final outline = Paint()
+        ..color = const Color(0xFFFF3B30).withValues(alpha: 0.48)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.0
+        ..isAntiAlias = true;
+      canvas.drawCircle(center, baseRadius * 1.06, outline);
     }
   }
 
   @override
-  bool shouldRepaint(covariant _CyberOrbPulsePainter oldDelegate) =>
-      oldDelegate.pulseProgress != pulseProgress ||
-      oldDelegate.status != status ||
-      oldDelegate.isHovered != isHovered;
-}
-
-/// Rotating Dashed Orbital Rings for High-Tech Connecting State
-class _RotatingOrbitPainter extends CustomPainter {
-  final double progress;
-
-  const _RotatingOrbitPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = size.center(Offset.zero);
-    final radius = size.shortestSide / 2.0;
-
-    // Outer Clockwise Arc
-    final outerPaint = Paint()
-      ..color = const Color(0xFF00F5B8).withValues(alpha: 0.65)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
-      ..strokeCap = StrokeCap.round;
-
-    final outerStartAngle = progress * 2 * math.pi;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      outerStartAngle,
-      math.pi * 0.65,
-      false,
-      outerPaint,
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      outerStartAngle + math.pi,
-      math.pi * 0.65,
-      false,
-      outerPaint,
-    );
-
-    // Inner Counter-Clockwise Arc
-    final innerPaint = Paint()
-      ..color = const Color(0xFFFFC46B).withValues(alpha: 0.55)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.6
-      ..strokeCap = StrokeCap.round;
-
-    final innerStartAngle = -progress * 2 * math.pi * 1.3;
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius * 0.88),
-      innerStartAngle,
-      math.pi * 0.5,
-      false,
-      innerPaint,
-    );
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius * 0.88),
-      innerStartAngle + math.pi,
-      math.pi * 0.5,
-      false,
-      innerPaint,
-    );
+  bool shouldRepaint(covariant _ConnectionBurstPainter oldDelegate) {
+    return oldDelegate.connectProgress != connectProgress ||
+        oldDelegate.isConnectAnimating != isConnectAnimating ||
+        oldDelegate.errorProgress != errorProgress ||
+        oldDelegate.isErrorAnimating != isErrorAnimating ||
+        oldDelegate.showError != showError ||
+        oldDelegate.baseRadius != baseRadius;
   }
-
-  @override
-  bool shouldRepaint(covariant _RotatingOrbitPainter oldDelegate) =>
-      oldDelegate.progress != progress;
 }
 
 /// Svg Shield Path Clipper
@@ -561,67 +739,4 @@ class SvgShieldClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(covariant SvgShieldClipper oldClipper) =>
       oldClipper.size != size;
-}
-
-/// Glowing Shield Loading Arc
-class ShieldLoadingPainter extends CustomPainter {
-  final double progress;
-  final double size;
-
-  ShieldLoadingPainter({required this.progress, required this.size});
-
-  @override
-  void paint(Canvas canvas, Size canvasSize) {
-    const String svgPathData =
-        "M51.39 1.16517L100.313 21.8855C100.72 22.0581 100.966 22.4781 100.917 22.918L94.1288 83.2901C93.9546 84.8395 93.1841 86.2602 91.9806 87.2513L51.6357 120.476C51.2665 120.781 50.7336 120.781 50.3643 120.476L10.0194 87.2513C8.8159 86.2602 8.04544 84.8395 7.87124 83.2901L1.08337 22.918C1.03392 22.4781 1.27953 22.0581 1.68712 21.8855L50.61 1.16517C50.8593 1.0596 51.1407 1.0596 51.39 1.16517Z";
-
-    final path = parseSvgPathData(svgPathData);
-    final bounds = path.getBounds();
-
-    final scaleX = canvasSize.width / bounds.width;
-    final scaleY = canvasSize.height / bounds.height;
-    final scale = math.min(scaleX, scaleY);
-
-    final scaledWidth = bounds.width * scale;
-    final scaledHeight = bounds.height * scale;
-    final offsetX = (canvasSize.width - scaledWidth) / 2;
-    final offsetY = (canvasSize.height - scaledHeight) / 2;
-
-    final matrix4 = Matrix4.identity()
-      ..translate(
-        offsetX - (bounds.left * scale),
-        offsetY - (bounds.top * scale),
-      )
-      ..scale(scale, scale);
-
-    final transformedPath = path.transform(matrix4.storage);
-    final metrics = transformedPath.computeMetrics().toList();
-    if (metrics.isEmpty) return;
-
-    final metric = metrics.first;
-    final totalLength = metric.length;
-    final pathSegment = metric.extractPath(
-      (progress * totalLength) % totalLength,
-      ((progress + 0.35) * totalLength) % totalLength,
-    );
-
-    final paint = Paint()
-      ..shader = const SweepGradient(
-        colors: [
-          Color(0x0000D4AA),
-          Color(0xFF00F5B8),
-          Color(0xFF00E5FF),
-          Color(0xFFFFC46B),
-        ],
-      ).createShader(Rect.fromLTWH(0, 0, canvasSize.width, canvasSize.height))
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.2
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawPath(pathSegment, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant ShieldLoadingPainter oldDelegate) =>
-      oldDelegate.progress != progress;
 }

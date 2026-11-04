@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter/foundation.dart';
 
 import 'app_talker.dart';
@@ -13,36 +15,78 @@ class DioClient {
 
   static final DioClient instance = DioClient._();
 
-  late final Dio dio =
-      Dio(
-          BaseOptions(
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 15),
-            sendTimeout: const Duration(seconds: 10),
-            headers: {
-              'User-Agent': 'Harmoney-Client/2.0 (by MilMit)',
-              'Accept': 'application/json, text/plain, */*',
-            },
-          ),
-        )
-        ..interceptors.add(
-          InterceptorsWrapper(
-            onRequest: (options, handler) {
-              AppTalker.debug('[Dio Request] ${options.method} ${options.uri}');
-              return handler.next(options);
-            },
-            onResponse: (response, handler) {
-              AppTalker.debug(
-                '[Dio Response] ${response.statusCode} from ${response.requestOptions.uri}',
-              );
-              return handler.next(response);
-            },
-            onError: (DioException error, handler) {
-              AppTalker.warning('[Dio Error] ${error.message} (${error.type})');
-              return handler.next(error);
-            },
-          ),
-        );
+  late final Dio dio = _createSecureDio();
+
+  static Dio _createSecureDio() {
+    final dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 15),
+        sendTimeout: const Duration(seconds: 10),
+        headers: {
+          'User-Agent': 'Harmoney-Client/2.0 (by MilMit)',
+          'Accept': 'application/json, text/plain, */*',
+        },
+      ),
+    );
+
+    dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        // Anti-Proxy: Bypass local sniffing/intercepting proxies
+        client.findProxy = (uri) => 'DIRECT';
+        // Reject unverified/self-signed certs immediately
+        client.badCertificateCallback =
+            (X509Certificate cert, String host, int port) => false;
+        return client;
+      },
+      validateCertificate: (X509Certificate? cert, String host, int port) {
+        if (cert == null) return false;
+        final issuer = cert.issuer.toLowerCase();
+        final subject = cert.subject.toLowerCase();
+        const suspiciousCa = [
+          'charles',
+          'httptoolkit',
+          'http toolkit',
+          'mitmproxy',
+          'portswigger',
+          'burp',
+          'fiddler',
+          'proxyman',
+          'whistle',
+          'reqable',
+        ];
+        if (suspiciousCa.any((ca) => issuer.contains(ca) || subject.contains(ca))) {
+          return false;
+        }
+        if (cert.issuer == cert.subject) {
+          return false;
+        }
+        return true;
+      },
+    );
+
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          AppTalker.debug('[Dio Request] ${options.method} ${options.uri}');
+          return handler.next(options);
+        },
+        onResponse: (response, handler) {
+          AppTalker.debug(
+            '[Dio Response] ${response.statusCode} from ${response.requestOptions.uri}',
+          );
+          return handler.next(response);
+        },
+        onError: (DioException error, handler) {
+          AppTalker.warning('[Dio Error] ${error.message} (${error.type})');
+          return handler.next(error);
+        },
+      ),
+    );
+
+    return dio;
+  }
 
   static const String _cloudflareDoH = 'https://cloudflare-dns.com/dns-query';
   static const String _googleDoH = 'https://dns.google/resolve';

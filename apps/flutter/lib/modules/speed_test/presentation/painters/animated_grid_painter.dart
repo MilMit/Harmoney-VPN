@@ -94,8 +94,7 @@ class AnimatedGridPainter extends CustomPainter {
 
     final bottomShadowHeight = size.height * 0.4;
     final bottomShadowStartY = size.height - bottomShadowHeight;
-    final bottomShadowTopWidth =
-        topWidth +
+    final bottomShadowTopWidth = topWidth +
         (bottomWidth - topWidth) * (bottomShadowStartY / size.height);
     final bottomShadowBottomWidth = bottomWidth;
 

@@ -13,7 +13,9 @@ import 'talker_logs_page.dart';
 import 'package:milmit_vpn_client/app/localized_text.dart';
 
 class DiagnosticsPage extends ConsumerStatefulWidget {
-  const DiagnosticsPage({super.key});
+  final bool isEmbedded;
+
+  const DiagnosticsPage({super.key, this.isEmbedded = false});
 
   @override
   ConsumerState<DiagnosticsPage> createState() => _DiagnosticsPageState();
@@ -163,14 +165,11 @@ class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 920),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    final content = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 920),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Keep the heading and actions on separate rows so they fit
                 // narrow phones and translated labels.
@@ -305,7 +304,19 @@ class _DiagnosticsPageState extends ConsumerState<DiagnosticsPage> {
               ],
             ),
           ),
-        ),
+        );
+
+    if (widget.isEmbedded) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        child: content,
+      );
+    }
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+        child: content,
       ),
     );
   }

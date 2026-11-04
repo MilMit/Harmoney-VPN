@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.Debug
 import android.provider.Settings
+import java.io.File
 import java.net.Inet4Address
 import java.net.InetAddress
 import io.flutter.plugin.common.MethodCall
@@ -17,6 +19,7 @@ class AndroidProtectionBridge(private val context: Context) {
     fun handle(call: MethodCall, result: MethodChannel.Result): Boolean {
         when (call.method) {
             "protectionState" -> result.success(state())
+            "runtimeSecurityStatus" -> result.success(runtimeSecurityStatus())
             "setDnsProtection" -> {
                 val enabled = call.argument<Boolean>("enabled") == true
                 prefs.edit().putBoolean("dns_protection", enabled).apply()
@@ -45,6 +48,21 @@ class AndroidProtectionBridge(private val context: Context) {
             "openVpnSettings" -> {
                 context.startActivity(Intent(Settings.ACTION_VPN_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 result.success(null)
+            }
+            "openTetherSettings" -> {
+                try {
+                    val intent = Intent("android.settings.TETHER_SETTINGS").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                    result.success(true)
+                } catch (e: Exception) {
+                    try {
+                        val fallback = Intent(Settings.ACTION_WIRELESS_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(fallback)
+                        result.success(true)
+                    } catch (e2: Exception) {
+                        result.error("TETHER_SETTINGS_FAILED", e2.message, null)
+                    }
+                }
             }
             "listInstalledApps" -> {
                 try {
@@ -85,6 +103,93 @@ class AndroidProtectionBridge(private val context: Context) {
             else -> return false
         }
         return true
+    }
+
+    private fun runtimeSecurityStatus(): Map<String, Any> {
+        val rootPaths = listOf(
+            "/system/bin/su",
+            "/system/xbin/su",
+            "/sbin/su",
+            "/su/bin/su",
+            "/system/bin/.ext/.su",
+            "/system/app/Superuser.apk",
+            "/data/adb/magisk",
+            "/data/adb/ksu",
+            "/data/adb/ap",
+            "/debug_ramdisk/.magisk",
+            "/system/framework/XposedBridge.jar",
+            "/data/local/tmp/frida-server",
+            "/data/local/tmp/re.frida.server",
+            "/data/local/tmp/frida",
+        )
+        val testKeys = Build.TAGS?.contains("test-keys", ignoreCase = true) == true
+        val suBinary = rootPaths.any { File(it).exists() }
+        val tracerPid = runCatching {
+            File("/proc/self/status").useLines { lines ->
+                lines.firstOrNull { it.startsWith("TracerPid:") }
+                    ?.substringAfter(':')?.trim()?.toIntOrNull()
+            }
+        }.getOrNull()
+        val mapsInspection = runCatching {
+            File("/proc/self/maps").useLines { lines ->
+                val suspicious = lines.any { line ->
+                    val lower = line.lowercase()
+                    listOf("frida", "gum-js-loop", "xposed", "lsposed", "substrate", "zygisk", "riru")
+                        .any(lower::contains)
+                }
+                suspicious
+            }
+        }
+        val suspiciousMaps = mapsInspection.getOrDefault(false)
+        val postureCheckFailed = tracerPid == null || !mapsInspection.isSuccess
+        val debuggable = (context.applicationInfo.flags and
+            android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0
+        val debuggerAttached = Debug.isDebuggerConnected() || Debug.waitingForDebugger()
+        val tracerAttached = (tracerPid ?: 0) > 0
+
+        val filesPath = context.filesDir.absolutePath
+        val virtualEnvironment = filesPath.contains("com.lbe.parallel") ||
+            filesPath.contains("io.va.exposed") ||
+            filesPath.contains("com.vphonegaga") ||
+            filesPath.contains("com.dual.parallel") ||
+            filesPath.contains("virtual") ||
+            filesPath.contains("clone")
+
+        val signatureCompromised = runCatching {
+            val pm = context.packageManager
+            val sigs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNING_CERTIFICATES).signingInfo?.apkContentsSigners
+            } else {
+                @Suppress("DEPRECATION")
+                pm.getPackageInfo(context.packageName, PackageManager.GET_SIGNATURES).signatures
+            }
+            val certBytes = sigs?.firstOrNull()?.toByteArray() ?: return@runCatching false
+            val md = java.security.MessageDigest.getInstance("SHA-256")
+            val hash = md.digest(certBytes).joinToString("") { "%02x".format(it) }
+            val isKnownDebugKey = hash.equals("32a2fc74d731105859e5a85df16d95f102815f222440424a2d8e06399a9a08e6", ignoreCase = true)
+            !debuggable && isKnownDebugKey
+        }.getOrDefault(false)
+
+        val fridaPortOpen = runCatching {
+            java.net.Socket().use { s ->
+                s.connect(java.net.InetSocketAddress("127.0.0.1", 27042), 150)
+                true
+            }
+        }.getOrDefault(false)
+
+        val rootIndicators = testKeys || suBinary || tracerAttached || suspiciousMaps || postureCheckFailed || fridaPortOpen
+        val overallPostureFailed = postureCheckFailed || suspiciousMaps || virtualEnvironment || signatureCompromised || fridaPortOpen
+
+        return mapOf(
+            "debugger_attached" to debuggerAttached,
+            "debuggable_build" to debuggable,
+            "root_indicators" to rootIndicators,
+            "tracer_attached" to tracerAttached,
+            "instrumentation_indicators" to (suspiciousMaps || fridaPortOpen),
+            "posture_check_failed" to overallPostureFailed,
+            "virtual_environment" to virtualEnvironment,
+            "signature_compromised" to signatureCompromised,
+        )
     }
 
     private fun state(): Map<String, Any?> {

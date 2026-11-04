@@ -1,11 +1,24 @@
 import com.android.build.api.dsl.ApplicationExtension
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+val releaseSigningPropertiesFile = rootProject.file("key.properties")
+val releaseSigningProperties = Properties().apply {
+    if (releaseSigningPropertiesFile.isFile) {
+        releaseSigningPropertiesFile.inputStream().use(::load)
+    }
+}
+val releaseStorePath = releaseSigningProperties.getProperty("storeFile")
+val releaseSigningConfigured = !releaseStorePath.isNullOrBlank() &&
+    !releaseSigningProperties.getProperty("storePassword").isNullOrBlank() &&
+    !releaseSigningProperties.getProperty("keyAlias").isNullOrBlank() &&
+    !releaseSigningProperties.getProperty("keyPassword").isNullOrBlank()
 
 extensions.configure<ApplicationExtension> {
     namespace = "io.harmoney.client"
@@ -49,10 +62,22 @@ extensions.configure<ApplicationExtension> {
 
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("debug")
-            // Keep release packaging reliable until dedicated R8 rules are maintained.
-            isMinifyEnabled = false
-            isShrinkResources = false
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.create("release").apply {
+                    storeFile = rootProject.file(releaseStorePath!!)
+                    storePassword = releaseSigningProperties.getProperty("storePassword")
+                    keyAlias = releaseSigningProperties.getProperty("keyAlias")
+                    keyPassword = releaseSigningProperties.getProperty("keyPassword")
+                }
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
 }

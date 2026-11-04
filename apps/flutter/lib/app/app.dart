@@ -1,3 +1,5 @@
+import '../shared/layout/main_screen_background.dart';
+import '../core/updater/app_update_service.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' as io;
@@ -7,24 +9,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../core/theme/app_icons.dart';
 import '../core/theme/app_theme.dart';
 import '../core/vpn_core.dart';
 import '../core/vpn_core_providers.dart';
 import '../core/harmoney_vpn_bridge.dart';
 import '../core/vpn_notifications.dart';
 import '../core/windows_tray_bridge.dart';
+import '../core/windows_startup_scheduler.dart';
 import '../features/hotspot/hotspot_page.dart';
 import '../features/locations/locations_page.dart';
 import '../features/protection/protection_page.dart';
+import '../features/diagnostics/talker_logs_page.dart';
 import '../features/settings/settings_page.dart';
-import '../features/shared/harmoney_pro_download_card.dart';
 import '../features/split_tunnel/split_tunnel_page.dart';
 import '../features/statistics/statistics_page.dart';
 import '../l10n/app_localizations.dart';
 import '../modules/main/presentation/screens/main_screen.dart';
 import '../modules/speed_test/presentation/screens/speed_test_diagnostics_page.dart';
 import '../shared/layout/navbar/harmoney_navbar.dart';
+import '../shared/widgets/apple_glass_card.dart';
 import 'app_state.dart';
 
 import 'package:milmit_vpn_client/app/localized_text.dart';
@@ -87,8 +90,8 @@ class _VpnClientAppState extends State<VpnClientApp> {
           locale: state.locale,
           supportedLocales: AppLocalizations.supportedLocales,
           localizationsDelegates: AppLocalizations.localizationsDelegates,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
+          theme: AppTheme.themeFor(state.locale, isDark: false),
+          darkTheme: AppTheme.themeFor(state.locale, isDark: true),
           builder: (context, child) {
             final rtl = state.locale.languageCode == 'fa' ||
                 state.locale.languageCode == 'ar';
@@ -168,13 +171,32 @@ class _HarmoneySplashState extends State<HarmoneySplash>
                     child: Container(
                       width: 120,
                       height: 120,
-                      alignment: Alignment.center,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          AppIcons.shieldAnime(width: 120, height: 120),
-                          AppIcons.harmoneyStandby(width: 54, height: 54),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(26),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                const Color(0xFF00E5FF).withValues(alpha: 0.38),
+                            blurRadius: 32,
+                            spreadRadius: 2,
+                          ),
+                          BoxShadow(
+                            color:
+                                const Color(0xFF00F5B8).withValues(alpha: 0.24),
+                            blurRadius: 48,
+                            offset: const Offset(0, 10),
+                          ),
                         ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(26),
+                        child: Image.asset(
+                          'assets/images/app_launcher.png',
+                          width: 112,
+                          height: 112,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
+                        ),
                       ),
                     ),
                   ),
@@ -247,8 +269,8 @@ class AppShell extends ConsumerStatefulWidget {
 
 class _AppShellState extends ConsumerState<AppShell> {
   static bool _linuxTrayHandlerInstalled = false;
+  static String? _lastLinuxTrayLabels;
   int _index = 0;
-  int _previousIndex = 0;
   VpnServer? _selectedServer;
   static const _lastSelectedServerKey = 'last_selected_vpn_server';
 
@@ -256,6 +278,18 @@ class _AppShellState extends ConsumerState<AppShell> {
   void initState() {
     super.initState();
     unawaited(_restoreSelectedServer());
+    if (io.Platform.isWindows) {
+      unawaited(WindowsStartupScheduler.isEnabled().then((enabled) {
+        if (mounted && widget.appState.launchOnStartup != enabled) {
+          unawaited(widget.appState.setLaunchOnStartup(enabled));
+        }
+      }));
+    }
+    Future.delayed(const Duration(milliseconds: 3500), () {
+      if (mounted) {
+        AppUpdateService.instance.autoCheckOnStartup(context);
+      }
+    });
   }
 
   Future<void> _restoreSelectedServer() async {
@@ -314,7 +348,6 @@ class _AppShellState extends ConsumerState<AppShell> {
   void _select(int value) {
     if (_index == value) return;
     setState(() {
-      _previousIndex = _index;
       _index = value;
     });
   }
@@ -325,7 +358,6 @@ class _AppShellState extends ConsumerState<AppShell> {
       widget.appState.setProvider(server.providerId);
     }
     setState(() {
-      _previousIndex = _index;
       _selectedServer = server;
       _index = 0; // Back to main screen
     });
@@ -360,25 +392,178 @@ class _AppShellState extends ConsumerState<AppShell> {
     }
   }
 
+  Future<void> _quitFromDesktopTray() async {
+    final core = ref.read(vpnCoreProvider);
+    final current = ref.read(connectionStateProvider).asData?.value;
+    try {
+      if (current?.isTransitioning == true) {
+        await core.cancelConnect().timeout(const Duration(seconds: 8));
+      } else if (current?.isConnected == true) {
+        await core.disconnect().timeout(const Duration(seconds: 8));
+      }
+    } catch (_) {
+      // An explicit Quit still takes effect if tunnel shutdown fails.
+    } finally {
+      try {
+        if (io.Platform.isLinux) {
+          await HarmoneyBridge().quitApplication();
+        } else if (io.Platform.isWindows) {
+          await WindowsTrayBridge.quitApplication();
+        }
+      } catch (_) {
+        // Native exit fallback timers prevent a stuck tray process.
+      }
+    }
+  }
+
+  void _openLogsFromWindowsTray() {
+    if (!mounted) return;
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(builder: (_) => const TalkerLogsPage()),
+    );
+  }
+
+  Future<void> _toggleLaunchOnStartupFromWindowsTray() async {
+    final enabled = !widget.appState.launchOnStartup;
+    try {
+      await WindowsStartupScheduler.setEnabled(
+        enabled,
+        startMinimized: widget.appState.startMinimized,
+      );
+      await widget.appState.setLaunchOnStartup(enabled);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: LocalizedText('Failed to update autostart: $error')),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleStartMinimizedFromWindowsTray() async {
+    final enabled = !widget.appState.startMinimized;
+    try {
+      if (widget.appState.launchOnStartup) {
+        await WindowsStartupScheduler.setEnabled(
+          true,
+          startMinimized: enabled,
+        );
+      }
+      await widget.appState.setStartMinimized(enabled);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: LocalizedText('Failed to update autostart: $error')),
+        );
+      }
+    }
+  }
+
+  Map<String, String> _trayLabels(AppLocalizations l10n) => <String, String>{
+        'appName': l10n.appTitle,
+        'openApplication': l10n.desktopTrayOpenApplication,
+        'chooseServer': l10n.desktopTrayChooseServer,
+        'preferences': l10n.desktopTrayPreferences,
+        'startupOptions': l10n.desktopTrayStartupOptions,
+        'launchOnStartup': l10n.desktopTrayLaunchOnStartup,
+        'autoConnect': l10n.appString_AutoConnect,
+        'soundEffect': l10n.desktopTraySoundEffect,
+        'startMinimized': l10n.desktopTrayStartMinimized,
+        'forceClose': l10n.desktopTrayForceClose,
+        'serviceMode': l10n.desktopTrayServiceMode,
+        'proxyService': l10n.desktopTrayProxyService,
+        'systemProxy': l10n.desktopTraySystemProxy,
+        'vpnModeUnavailable': l10n.desktopTrayVpnModeUnavailable,
+        'introduction': l10n.introduction,
+        'speedTest': l10n.speedTest,
+        'logs': l10n.appLogs,
+        'exit': l10n.desktopTrayExit,
+        'connect': l10n.connect,
+        'disconnect': l10n.disconnect,
+        'connected': l10n.connected,
+        'disconnected': l10n.disconnected,
+        'connecting': l10n.connecting,
+        'disconnecting': l10n.desktopTrayDisconnecting,
+        'cancelConnection': l10n.desktopTrayCancelConnection,
+        'error': l10n.desktopTrayError,
+        'ready': l10n.desktopTrayReady,
+        'automatic': l10n.desktopTrayAutomatic,
+      };
+
   @override
   Widget build(BuildContext context) {
     final state = widget.appState;
     ref.watch(vpnNotificationsProvider).setLocale(state.locale);
     final connection = ref.watch(connectionStateProvider).asData?.value;
+    final trayLabels = _trayLabels(AppLocalizations.of(context)!);
     if (io.Platform.isLinux && !_linuxTrayHandlerInstalled) {
       _linuxTrayHandlerInstalled = true;
       unawaited(HarmoneyBridge().setNativeActionHandler((call) async {
-        if (call.method == 'openServerList') _select(1);
+        switch (call.method) {
+          case 'openServerList':
+            _select(1);
+            break;
+          case 'openPreferences':
+          case 'openSettings':
+            _select(4);
+            break;
+          case 'openLogs':
+            _openLogsFromWindowsTray();
+            break;
+          case 'openSpeedTest':
+            _select(2);
+            break;
+          case 'openIntroduction':
+            _select(0);
+            break;
+          case 'handleConnectionStatusClick':
+          case 'triggerAutoConnect':
+            await _toggleFromWindowsTray();
+            break;
+          case 'setAutoConnect':
+            final args = call.arguments;
+            if (args is Map && args['value'] is bool) {
+              await widget.appState.setAutoConnect(args['value'] as bool);
+            }
+            break;
+          case 'quitApplication':
+            await _quitFromDesktopTray();
+            break;
+        }
         return null;
       }));
+    }
+    if (io.Platform.isLinux) {
+      final signature = trayLabels.entries
+          .map((entry) => '${entry.key}=${entry.value}')
+          .join('\u0000');
+      if (_lastLinuxTrayLabels != signature) {
+        _lastLinuxTrayLabels = signature;
+        unawaited(HarmoneyBridge().updateTrayLabels(trayLabels));
+      }
     }
     if (io.Platform.isWindows) {
       unawaited(WindowsTrayBridge.configure(
         onToggle: _toggleFromWindowsTray,
         onOpenApp: () => _select(0),
         onOpenServers: () => _select(1),
+        onOpenSettings: () => _select(4),
+        onOpenLogs: _openLogsFromWindowsTray,
+        onToggleAutoConnect: () =>
+            widget.appState.setAutoConnect(!widget.appState.autoConnect),
+        onToggleLaunchOnStartup: _toggleLaunchOnStartupFromWindowsTray,
+        onToggleStartMinimized: _toggleStartMinimizedFromWindowsTray,
+        onQuit: _quitFromDesktopTray,
       ));
-      unawaited(WindowsTrayBridge.update(connection));
+      unawaited(WindowsTrayBridge.update(
+        connection,
+        labels: trayLabels,
+        autoConnect: state.autoConnect,
+        launchOnStartup: state.launchOnStartup,
+        startMinimized: state.startMinimized,
+      ));
     }
 
     final pages = [
@@ -386,6 +571,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       MainScreen(
         appState: state,
         selectedServer: _selectedServer,
+        isActive: _index == 0,
         onOpenLocations: () => _select(1),
         onOpenSpeedTest: () => _select(2),
         onOpenProtection: () => _select(3),
@@ -405,36 +591,12 @@ class _AppShellState extends ConsumerState<AppShell> {
       SettingsPage(appState: state),
     ];
 
-    final isForward = _index >= _previousIndex;
-
     return Scaffold(
       extendBody: true,
       backgroundColor: const Color(0xFF092B3B),
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 320),
-        switchInCurve: Curves.easeOutCubic,
-        switchOutCurve: Curves.easeInCubic,
-        transitionBuilder: (child, animation) {
-          final isIncoming = child.key == ValueKey<int>(_index);
-          final beginX = isIncoming
-              ? (isForward ? 0.04 : -0.04)
-              : (isForward ? -0.04 : 0.04);
-
-          return SlideTransition(
-            position: Tween<Offset>(
-              begin: Offset(beginX, 0),
-              end: Offset.zero,
-            ).animate(animation),
-            child: FadeTransition(
-              opacity: animation,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.98, end: 1.0).animate(animation),
-                child: child,
-              ),
-            ),
-          );
-        },
-        child: KeyedSubtree(key: ValueKey<int>(_index), child: pages[_index]),
+      body: IndexedStack(
+        index: _index,
+        children: pages,
       ),
       bottomNavigationBar: HarmoneyNavBar(
         currentIndex: _index,
@@ -455,7 +617,7 @@ class _ProtectionAndRulesView extends StatefulWidget {
 }
 
 class _ProtectionAndRulesViewState extends State<_ProtectionAndRulesView> {
-  int _subTab = io.Platform.isWindows ? 1 : 0;
+  int _subTab = 0;
   int _prevSubTab = 0;
 
   void _setSubTab(int index) {
@@ -466,120 +628,188 @@ class _ProtectionAndRulesViewState extends State<_ProtectionAndRulesView> {
     });
   }
 
+  Widget _buildHeader(BuildContext context, bool isPersian) {
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(20.w, 14.h, 20.w, 6.h),
+      child: Row(
+        children: [
+          Container(
+            width: 46.w,
+            height: 46.w,
+            decoration: BoxDecoration(
+              color: const Color(0xFF00D4AA).withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(15.r),
+              border: Border.all(
+                color: const Color(0xFF00D4AA).withValues(alpha: 0.35),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF00D4AA).withValues(alpha: 0.18),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Icon(
+              Icons.shield_rounded,
+              color: const Color(0xFF00D4AA),
+              size: 24.sp,
+            ),
+          ),
+          SizedBox(width: 14.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LocalizedText(
+                  isPersian ? 'امنیت و سپر' : 'Security & Shield',
+                  style: TextStyle(
+                    fontSize: 23.sp.clamp(20, 26),
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.35,
+                  ),
+                ),
+                SizedBox(height: 3.h),
+                LocalizedText(
+                  isPersian
+                      ? 'کیل‌سوئیچ، حفاظت از نشت داده و مسیریابی هوشمند'
+                      : 'Kill switch, leak protection & smart routing',
+                  style: TextStyle(
+                    fontSize: 12.sp.clamp(11, 14),
+                    color: Colors.white60,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPersian = widget.appState.locale.languageCode == 'fa';
 
     const subPages = [
-      SplitTunnelPage(),
       ProtectionPage(),
+      SplitTunnelPage(),
       HotspotPage(),
       StatisticsPage(),
     ];
 
-    return SafeArea(
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0A2230).withValues(alpha: 0.8),
+    return MainScreenBackground(
+      status: VpnConnectionStatus.disconnected,
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _buildHeader(context, isPersian),
+            Padding(
+              padding: EdgeInsetsDirectional.fromSTEB(16.w, 4.h, 16.w, 10.h),
+              child: AppleGlassCard(
+                padding: const EdgeInsets.all(4),
+                blur: 8,
                 borderRadius: BorderRadius.circular(100),
-                border: Border.all(
-                  color: const Color(0xFF00D4AA).withValues(alpha: 0.2),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (!io.Platform.isWindows)
+                surfaceColor: const Color(0xFF08202D),
+                surfaceAlpha: 0.54,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       _SubTabPill(
-                        label: isPersian
-                            ? 'تونل تفکیکی و بایپس'
-                            : 'Split Tunnel & Bypass',
+                        label: io.Platform.isWindows
+                            ? (localizedUiText(
+                                context,
+                                (isPersian
+                                    ? 'بایپس کشور و برنامه'
+                                    : 'Country & App Bypass')))
+                            : (localizedUiText(
+                                context,
+                                (isPersian
+                                    ? 'امنیت و کیل‌سوئیچ'
+                                    : 'Security & Kill Switch'))),
                         selected: _subTab == 0,
-                        icon: Icons.alt_route_rounded,
+                        icon: io.Platform.isWindows
+                            ? Icons.public_rounded
+                            : Icons.security_rounded,
                         onTap: () => _setSubTab(0),
                       ),
-                    if (!io.Platform.isWindows) const SizedBox(width: 4),
-                    _SubTabPill(
-                      label: io.Platform.isWindows
-                          ? (isPersian
-                              ? 'بایپس کشور و برنامه'
-                              : 'Country & App Bypass')
-                          : (isPersian
-                              ? 'امنیت و کیل‌سوئیچ'
-                              : 'Security & Kill Switch'),
-                      selected: _subTab == 1,
-                      icon: io.Platform.isWindows
-                          ? Icons.public_rounded
-                          : Icons.security_rounded,
-                      onTap: () => _setSubTab(1),
-                    ),
-                    const SizedBox(width: 4),
-                    _SubTabPill(
-                      label: isPersian ? 'اشتراک هات‌اسپات' : 'Hotspot Shield',
-                      selected: _subTab == 2,
-                      icon: Icons.wifi_tethering_rounded,
-                      onTap: () => _setSubTab(2),
-                    ),
-                    const SizedBox(width: 4),
-                    _SubTabPill(
-                      label:
-                          isPersian ? 'نمودار و آمار ترافیک' : 'Traffic Stats',
-                      selected: _subTab == 3,
-                      icon: Icons.bar_chart_rounded,
-                      onTap: () => _setSubTab(3),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      if (!io.Platform.isWindows) ...[
+                        _SubTabPill(
+                          label: localizedUiText(
+                              context,
+                              (isPersian
+                                  ? 'تونل تفکیکی و بایپس'
+                                  : 'Split Tunnel & Bypass')),
+                          selected: _subTab == 1,
+                          icon: Icons.alt_route_rounded,
+                          onTap: () => _setSubTab(1),
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      _SubTabPill(
+                        label: localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'اشتراک هات‌اسپات'
+                                : 'Hotspot Shield')),
+                        selected: _subTab == 2,
+                        icon: Icons.wifi_tethering_rounded,
+                        onTap: () => _setSubTab(2),
+                      ),
+                      const SizedBox(width: 4),
+                      _SubTabPill(
+                        label: localizedUiText(
+                            context,
+                            (isPersian
+                                ? 'نمودار و آمار ترافیک'
+                                : 'Traffic Stats')),
+                        selected: _subTab == 3,
+                        icon: Icons.bar_chart_rounded,
+                        onTap: () => _setSubTab(3),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 2, 16, 10),
-            child: const HarmoneyProDownloadCard(),
-          ),
-          Expanded(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 280),
-              switchInCurve: Curves.easeOutCubic,
-              switchOutCurve: Curves.easeInCubic,
-              transitionBuilder: (child, animation) {
-                final isIncoming = child.key == ValueKey<int>(_subTab);
-                final isForward = _subTab >= _prevSubTab;
-                final beginX = isIncoming
-                    ? (isForward ? 0.05 : -0.05)
-                    : (isForward ? -0.05 : 0.05);
+            Expanded(
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  final isIncoming = child.key == ValueKey<int>(_subTab);
+                  final isForward = _subTab >= _prevSubTab;
+                  final beginX = isIncoming
+                      ? (isForward ? 0.05 : -0.05)
+                      : (isForward ? -0.05 : 0.05);
 
-                return SlideTransition(
-                  position: Tween<Offset>(
-                    begin: Offset(beginX, 0),
-                    end: Offset.zero,
-                  ).animate(animation),
-                  child: FadeTransition(opacity: animation, child: child),
-                );
-              },
-              child: KeyedSubtree(
-                key: ValueKey<int>(_subTab),
-                child: subPages[_subTab],
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: Offset(beginX, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(
+                      opacity: animation,
+                      child: child,
+                    ),
+                  );
+                },
+                child: KeyedSubtree(
+                  key: ValueKey<int>(_subTab),
+                  child: subPages[_subTab],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 80),
-        ],
+          ],
+        ),
       ),
     );
   }

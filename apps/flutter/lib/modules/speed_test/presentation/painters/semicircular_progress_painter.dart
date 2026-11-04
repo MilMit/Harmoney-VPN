@@ -48,8 +48,7 @@ class SemicircularProgressPainter extends CustomPainter {
     if (animatedProgress > 0) {
       // Draw shadow first
       final shadowPaint = Paint()
-        ..color =
-            const Color(0x6687BD23) // #87BD2366
+        ..color = const Color(0x6687BD23) // #87BD2366
         ..strokeWidth = strokeWidth
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round

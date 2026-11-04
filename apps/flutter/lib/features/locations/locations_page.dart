@@ -817,199 +817,6 @@ class _LocationsPageState extends ConsumerState<LocationsPage> {
     }
   }
 
-  Future<void> _manageCustomLists(List<VpnServer> allServers) async {
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setDlg) => AlertDialog(
-          backgroundColor: const Color(0xFF1C1C22),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          title: LocalizedText(
-            'Custom Location Lists',
-            style: TextStyle(
-              fontFamily: 'Lato',
-              fontWeight: FontWeight.bold,
-              fontSize: 18.sp,
-            ),
-          ),
-          content: SizedBox(
-            width: 480.w,
-            height: 380.h,
-            child: Column(
-              children: [
-                FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFF00D4AA),
-                    foregroundColor: Colors.black,
-                  ),
-                  onPressed: () async {
-                    final nameCtrl = TextEditingController();
-                    final selectedIds = <String>{};
-                    final created = await showDialog<bool>(
-                      context: context,
-                      builder: (c) => StatefulBuilder(
-                        builder: (cc, setSub) => AlertDialog(
-                          backgroundColor: const Color(0xFF22222A),
-                          title: const LocalizedText('New Custom List'),
-                          content: SizedBox(
-                            width: 400.w,
-                            height: 340.h,
-                            child: Column(
-                              children: [
-                                TextField(
-                                  controller: nameCtrl,
-                                  decoration: InputDecoration(
-                                    labelText: localizedUiText(
-                                      context,
-                                      'List name (e.g. European Fast)',
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.white.withValues(
-                                      alpha: 0.08,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(12.r),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                Expanded(
-                                  child: ListView.builder(
-                                    itemCount: allServers.length,
-                                    itemBuilder: (context, i) {
-                                      final s = allServers[i];
-                                      final checked = selectedIds.contains(
-                                        s.id,
-                                      );
-                                      return CheckboxListTile(
-                                        dense: true,
-                                        activeColor: const Color(0xFF00D4AA),
-                                        value: checked,
-                                        title: LocalizedText(
-                                          '${s.country} - ${s.city}',
-                                        ),
-                                        onChanged: (val) {
-                                          setSub(() {
-                                            val == true
-                                                ? selectedIds.add(s.id)
-                                                : selectedIds.remove(s.id);
-                                          });
-                                        },
-                                      );
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(c, false),
-                              child: const LocalizedText('Cancel'),
-                            ),
-                            FilledButton(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF00D4AA),
-                                foregroundColor: Colors.black,
-                              ),
-                              onPressed: () => Navigator.pop(c, true),
-                              child: const LocalizedText('Create'),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                    if (created == true && nameCtrl.text.trim().isNotEmpty) {
-                      final newList = {
-                        'id': 'list-${DateTime.now().millisecondsSinceEpoch}',
-                        'name': nameCtrl.text.trim(),
-                        'location_ids': selectedIds.toList(),
-                      };
-                      final next = [..._customLists, newList];
-                      await _controls.saveLocationLists(next);
-                      setDlg(() => _customLists = next);
-                      setState(() => _customLists = next);
-                    }
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const LocalizedText('Create new list'),
-                ),
-                const SizedBox(height: 12),
-                Expanded(
-                  child: _customLists.isEmpty
-                      ? Center(
-                          child: LocalizedText(
-                            'No custom lists created yet.',
-                            style: TextStyle(color: Colors.grey[400]),
-                          ),
-                        )
-                      : ListView.separated(
-                          itemCount: _customLists.length,
-                          separatorBuilder: (_, __) => Divider(
-                            height: 1,
-                            color: Colors.white.withValues(alpha: 0.08),
-                          ),
-                          itemBuilder: (context, i) {
-                            final item = _customLists[i];
-                            final count =
-                                (item['location_ids'] as List? ?? []).length;
-                            return ListTile(
-                              leading: const Icon(
-                                Icons.folder_special_outlined,
-                                color: Color(0xFF00D4AA),
-                              ),
-                              title: LocalizedText(
-                                '${item['name']}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: LocalizedText(
-                                '$count locations',
-                                style: TextStyle(color: Colors.grey[400]),
-                              ),
-                              trailing: IconButton(
-                                icon: const Icon(
-                                  Icons.delete_outline,
-                                  color: Colors.redAccent,
-                                ),
-                                onPressed: () async {
-                                  final next = _customLists
-                                      .where((l) => l['id'] != item['id'])
-                                      .toList();
-                                  await _controls.saveLocationLists(next);
-                                  setDlg(() => _customLists = next);
-                                  setState(() {
-                                    _customLists = next;
-                                    if (_selectedCustomListId == item['id']) {
-                                      _selectedCustomListId = null;
-                                    }
-                                  });
-                                },
-                              ),
-                            );
-                          },
-                        ),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const LocalizedText(
-                'Done',
-                style: TextStyle(color: Color(0xFF00D4AA)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildTopBar(BuildContext context, int totalCount) {
     final isPersian = widget.appState.locale.languageCode == 'fa';
     final connState = ref.watch(connectionStateProvider);
@@ -2659,21 +2466,28 @@ class _LocationsPageState extends ConsumerState<LocationsPage> {
                         return Column(
                           children: [
                             Expanded(
-                              child: ListView(
+                              child: ListView.builder(
                                 padding: EdgeInsets.only(bottom: 110.h),
-                                children: [
-                                  for (final group in subscriptionGroups)
-                                    _buildHarmoneySubscriptionCard(
+                                physics: const BouncingScrollPhysics(),
+                                itemCount:
+                                    subscriptionGroups.length + filtered.length,
+                                itemBuilder: (context, index) {
+                                  if (index < subscriptionGroups.length) {
+                                    final group = subscriptionGroups[index];
+                                    return _buildHarmoneySubscriptionCard(
                                       group.key,
                                       group.value,
                                       isPersian,
-                                    ),
-                                  for (final server in filtered)
-                                    _buildServerCard(
-                                      server,
-                                      isFastest: fastest?.id == server.id,
-                                    ),
-                                ],
+                                    );
+                                  }
+                                  final serverIndex =
+                                      index - subscriptionGroups.length;
+                                  final server = filtered[serverIndex];
+                                  return _buildServerCard(
+                                    server,
+                                    isFastest: fastest?.id == server.id,
+                                  );
+                                },
                               ),
                             ),
                           ],

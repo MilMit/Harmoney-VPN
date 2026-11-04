@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <memory>
+#include <map>
 
 class SystemTray
 {
@@ -58,6 +59,7 @@ public:
     bool Initialize(GtkWindow *window, ActionCallback callback);
     void Cleanup();
     void UpdateTooltip(const std::string &tooltip);
+    void UpdateStatusTooltip(const std::string &key, const std::string &fallback);
     void UpdateIcon(TrayIconStatus status);
     void UpdateConnectionStatus(ConnectionStatus status);
     void SetLaunchOnStartup(bool value);
@@ -68,6 +70,8 @@ public:
     void SetProxyService(bool value);
     void SetSystemProxy(bool value);
     void SetVPNMode(bool value);
+    void SetLabels(const std::map<std::string, std::string> &labels);
+    std::string Label(const std::string &key, const std::string &fallback) const;
     bool GetAutoConnect() const { return auto_connect_; }
     bool GetStartMinimized() const { return start_minimized_; }
     bool GetForceClose() const { return force_close_; }
@@ -86,7 +90,7 @@ private:
     void ExecuteAction(TrayAction action);
     std::string GetIconPath(TrayIconStatus status) const;
     std::string GetIconName(TrayIconStatus status) const;
-    static std::string ConnectionStatusToString(ConnectionStatus status);
+    std::string ConnectionStatusToString(ConnectionStatus status) const;
 
     // GTK callbacks
     static void OnMenuItemActivated(GtkMenuItem *menu_item, gpointer user_data);
@@ -110,6 +114,9 @@ private:
     bool system_proxy_;
     bool vpn_mode_;
     ConnectionStatus connection_status_;
+    std::map<std::string, std::string> labels_;
+    std::string tooltip_status_key_ = "ready";
+    std::string tooltip_status_fallback_ = "Ready";
 };
 
 #endif // RUNNER_SYSTEM_TRAY_H_

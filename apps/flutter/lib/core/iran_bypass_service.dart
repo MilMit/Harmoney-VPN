@@ -200,32 +200,51 @@ class IranBypassService {
     );
   }
 
-  /// Resolves the complete Iran GeoSite domain set, rather than maintaining a
-  /// hand-written list. Results are cached so route setup does not repeat DNS
-  /// lookups on every reconnect.
+  /// Resolves curated and key non-.ir domestic domains to static routes.
+  /// Results are cached so route setup does not repeat DNS lookups on every reconnect.
+  /// Domestic .ir domains are already routed via country CIDRs; only domains that
+  /// may point to external Anycast/CDNs are resolved here.
   Future<List<String>> getDomainBypassRoutes() async {
     final now = DateTime.now();
     if (_cachedDomainRoutes != null &&
         _domainRoutesLoadedAt != null &&
-        now.difference(_domainRoutesLoadedAt!) < const Duration(minutes: 30)) {
+        now.difference(_domainRoutesLoadedAt!) < const Duration(hours: 4)) {
       return _cachedDomainRoutes!;
     }
 
     final routesCache = await _domainRoutesCacheFile();
-    if (await routesCache.exists() &&
-        now.difference(await routesCache.lastModified()) <
-            const Duration(minutes: 30)) {
-      final cached = _parseCidrContent(await routesCache.readAsString());
-      if (cached.isNotEmpty) {
-        _cachedDomainRoutes = cached;
-        _domainRoutesLoadedAt = now;
-        return cached;
+    if (await routesCache.exists()) {
+      final modified = await routesCache.lastModified();
+      if (now.difference(modified) < const Duration(hours: 12)) {
+        final cached = _parseCidrContent(await routesCache.readAsString());
+        if (cached.isNotEmpty) {
+          _cachedDomainRoutes = cached;
+          _domainRoutesLoadedAt = now;
+          return cached;
+        }
       }
     }
 
-    final domains = await _loadIranianGeoSiteDomains();
+    final geoSiteDomains = await _loadIranianGeoSiteDomains();
+    final bundledDomains = await _loadBundledDomains();
+    // Non-.ir domains and university/curated domains may point to external Anycast/IPs
+    final criticalDomains = <String>{
+      ...bundledDomains,
+      ...geoSiteDomains.where((d) => !d.endsWith('.ir')).take(100),
+      'digikala.com',
+      'aparat.com',
+      'filimo.com',
+      'telewebion.com',
+      'torob.com',
+      'divar.ir',
+      'snapp.ir',
+      'tapsi.ir',
+      'cafebazaar.ir',
+      'shaparak.ir',
+    };
+
     final routes = <String>{};
-    final pending = domains.toList(growable: false);
+    final pending = criticalDomains.toList(growable: false);
     var nextIndex = 0;
     Future<void> worker() async {
       while (true) {
@@ -233,26 +252,102 @@ class IranBypassService {
         if (index >= pending.length) return;
         try {
           final addresses = await InternetAddress.lookup(pending[index])
-              .timeout(const Duration(milliseconds: 1400));
+              .timeout(const Duration(milliseconds: 800));
           for (final address in addresses) {
             if (_isNonPublicAddress(address)) continue;
-            routes.add(
-              address.type == InternetAddressType.IPv4
-                  ? '${address.address}/32'
-                  : '${address.address}/128',
-            );
+            routes.add(address.type == InternetAddressType.IPv4
+                ? '${address.address}/32'
+                : '${address.address}/128');
           }
         } catch (_) {}
       }
     }
 
-    await Future.wait(List.generate(96, (_) => worker()));
+    await Future.wait(List.generate(16, (_) => worker()));
     _domainRoutesLoadedAt = now;
     _cachedDomainRoutes = routes.toList(growable: false);
     try {
       await _writeDomainRoutesCache(_cachedDomainRoutes!);
     } catch (_) {}
     return _cachedDomainRoutes!;
+  }
+
+  /// Returns the complete set of Iranian domains from GeoSite and bundled rules
+  /// without forcing blocking DNS resolutions.
+  Future<Set<String>> getIranianDomains() async {
+    final geoSiteDomains = await _loadIranianGeoSiteDomains();
+    final bundledDomains = await _loadBundledDomains();
+    return {...geoSiteDomains, ...bundledDomains};
+  }
+
+  /// Generates domain matching rules for modern routing engines (Xray, sing-box).
+  Future<List<String>> getDomainRulesForEngine() async {
+    final domains = await getIranianDomains();
+    final rules = <String>['domain:ir', 'domain:xn--mgba3a4f16a'];
+    for (final d in domains) {
+      if (!d.endsWith('.ir')) {
+        rules.add('domain:$d');
+      }
+    }
+    return rules;
+  }
+
+  /// High-performance domestic DNS resolvers.
+  List<String> getDomesticDnsServers() => const [
+        '10.202.10.202',
+        '178.22.122.100',
+        '10.202.10.10',
+        '185.51.200.2',
+      ];
+
+  /// Checks whether a hostname belongs to Iranian domestic networks.
+  bool isDomesticDomain(String host) {
+    final lower = host.trim().toLowerCase();
+    if (lower.endsWith('.ir') || lower.endsWith('.xn--mgba3a4f16a')) return true;
+    if (_cachedIranDomains != null && _cachedIranDomains!.contains(lower)) {
+      return true;
+    }
+    return false;
+  }
+
+  /// Generates a complete, high-speed Proxy Auto-Config (PAC) script for
+  /// Hotspot clients (iPhone, iPad, Windows, Android TV, Mac) and local browsers.
+  String generatePacScript({
+    String proxyHost = '192.168.43.1',
+    int socksPort = 10808,
+    int httpPort = 10809,
+  }) {
+    final buffer = StringBuffer();
+    buffer.writeln('function FindProxyForURL(url, host) {');
+    buffer.writeln('  // Local host and plain hostnames direct');
+    buffer.writeln('  if (isPlainHostName(host) || host === "localhost" || host === "127.0.0.1") return "DIRECT";');
+    buffer.writeln('  // Private RFC1918 subnets direct');
+    buffer.writeln('  if (shExpMatch(host, "10.*") || shExpMatch(host, "192.168.*") || shExpMatch(host, "172.1[6-9].*") || shExpMatch(host, "172.2[0-9].*") || shExpMatch(host, "172.3[0-1].*")) return "DIRECT";');
+    buffer.writeln('  // Iranian TLDs direct');
+    buffer.writeln('  if (shExpMatch(host, "*.ir") || shExpMatch(host, "*.xn--mgba3a4f16a") || host === "ir") return "DIRECT";');
+    buffer.writeln('  // Major domestic services');
+    buffer.writeln('  var directDomains = ["digikala.com", "aparat.com", "telewebion.com", "filimo.com", "rubika.ir", "eitaa.com", "bale.ai", "splus.ir", "shaparak.ir", "torob.com", "divar.ir", "snapp.ir", "tapsi.ir"];');
+    buffer.writeln('  for (var i = 0; i < directDomains.length; i++) {');
+    buffer.writeln('    if (host === directDomains[i] || dnsDomainIs(host, "." + directDomains[i])) return "DIRECT";');
+    buffer.writeln('  }');
+    buffer.writeln('  // All international traffic routes through encrypted proxy');
+    buffer.writeln('  return "PROXY $proxyHost:$httpPort; SOCKS5 $proxyHost:$socksPort; DIRECT";');
+    buffer.writeln('}');
+    return buffer.toString();
+  }
+
+  Future<Set<String>> _loadBundledDomains() async {
+    try {
+      final content =
+          await rootBundle.loadString('assets/rules/iran_domains.txt');
+      return content
+          .split(RegExp(r'\r?\n'))
+          .map((line) => line.trim().toLowerCase())
+          .where((line) => line.isNotEmpty && !line.startsWith('#'))
+          .toSet();
+    } catch (_) {
+      return const <String>{};
+    }
   }
 
   Future<Set<String>> _loadIranianGeoSiteDomains() async {
