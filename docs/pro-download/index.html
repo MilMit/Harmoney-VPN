@@ -150,16 +150,15 @@
 
     <footer>
       <span data-i18n="footer">Harmoney Pro · دریافت از منبع رسمی</span>
-      <a href="https://github.com/MilMit/Harmoney-VPN/releases/tag/pro-v0.1.6" target="_blank" rel="noopener noreferrer" data-i18n="releases">همهٔ نسخه‌های Harmoney Pro · دریافت خروجی‌ها</a>
+      <a href="https://github.com/MilMit/Harmoney-VPN/releases" target="_blank" rel="noopener noreferrer" data-i18n="releases" id="pro-releases-link">همهٔ نسخه‌های Harmoney Pro · دریافت خروجی‌ها</a>
     </footer>
   </div>
   <script>
-    // Keep all downloads on the Harmoney Pro release; never link to Free assets.
-    const downloads = {
-      android: "https://github.com/MilMit/Harmoney-VPN/releases/tag/pro-v0.1.6",
-      windows: "https://github.com/MilMit/Harmoney-VPN/releases/tag/pro-v0.1.6",
-      linux: "https://github.com/MilMit/Harmoney-VPN/releases/tag/pro-v0.1.6"
-    };
+    // Resolve the newest Pro release only; the repository's normal latest release belongs to Free.
+    const githubRepo = "MilMit/Harmoney-VPN";
+    const githubApi = `https://api.github.com/repos/${githubRepo}/releases?per_page=100`;
+    const downloads = { android: "", windows: "", linux: "" };
+    const proReleasesLink = document.getElementById("pro-releases-link");
     const strings = {
       fa: {
         pageTitle: "دانلود Harmoney Pro", eyebrow: "دانلود رسمی", title: 'Harmoney Pro برای <span class="gradient">دستگاه شما</span>',
@@ -276,6 +275,24 @@
       .find((code) => supportedLanguages.includes(code)) || "en";
     const cards = [...document.querySelectorAll("[data-platform]")];
     const languageSelect = document.getElementById("language");
+    const setDownloadLinks = () => {
+      cards.forEach((card) => {
+        const key = card.dataset.platform;
+        const link = card.querySelector("[data-download]");
+        const url = downloads[key];
+        if (url) {
+          link.href = url;
+          link.target = "_blank";
+          link.rel = "noopener noreferrer";
+          link.removeAttribute("aria-disabled");
+          link.querySelector("span").textContent = strings[language].download;
+        } else {
+          link.href = "#";
+          link.setAttribute("aria-disabled", "true");
+          link.querySelector("span").textContent = strings[language].soon;
+        }
+      });
+    };
     const setLanguage = (next) => {
       language = next;
       const copy = strings[language];
@@ -297,25 +314,41 @@
         const key = card.dataset.platform;
         const link = card.querySelector("[data-download]");
         card.classList.toggle("recommended", key === platform);
-        const url = downloads[key].trim();
-        if (url.startsWith("https://")) {
-          link.href = url;
-          link.target = "_blank";
-          link.rel = "noopener noreferrer";
-          link.removeAttribute("aria-disabled");
-          link.querySelector("span").textContent = copy.download;
-        } else {
-          link.href = "#";
-          link.setAttribute("aria-disabled", "true");
-          link.querySelector("span").textContent = copy.soon;
-        }
       });
+      setDownloadLinks();
     };
     cards.forEach((card) => card.querySelector("[data-download]").addEventListener("click", (event) => {
       if (event.currentTarget.getAttribute("aria-disabled") === "true") event.preventDefault();
     }));
     languageSelect.addEventListener("change", () => setLanguage(languageSelect.value));
     setLanguage(language);
+    fetch(githubApi, { headers: { Accept: "application/vnd.github+json" } })
+      .then((response) => {
+        if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+        return response.json();
+      })
+      .then((releases) => {
+        const proRelease = releases
+          .filter((release) => /^pro-v\d+\.\d+\.\d+/i.test(release.tag_name))
+          .sort((a, b) => {
+            const version = (tag) => tag.match(/^pro-v(\d+)\.(\d+)\.(\d+)/i).slice(1).map(Number);
+            const left = version(a.tag_name);
+            const right = version(b.tag_name);
+            for (let i = 0; i < 3; i++) if (left[i] !== right[i]) return right[i] - left[i];
+            return new Date(b.published_at || b.created_at) - new Date(a.published_at || a.created_at);
+          })[0];
+        if (!proRelease) return;
+
+        proReleasesLink.href = proRelease.html_url;
+        const assets = proRelease.assets || [];
+        const findAsset = (names) => assets.find((asset) => names.some((pattern) => pattern.test(asset.name)));
+        const android = findAsset([/universal\.apk$/i]) || findAsset([/\.apk$/i]);
+        const linux = findAsset([/\.deb$/i]) || findAsset([/linux.*\.tar\.gz$/i]);
+        if (android) downloads.android = android.browser_download_url;
+        if (linux) downloads.linux = linux.browser_download_url;
+        setDownloadLinks();
+      })
+      .catch((error) => console.error("Unable to load Harmoney Pro downloads:", error));
   </script>
 </body>
 </html>
