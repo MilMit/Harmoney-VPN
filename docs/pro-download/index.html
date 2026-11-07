@@ -379,6 +379,65 @@ h1 {
   grid-template-columns:repeat(3,1fr);
   gap:15px
 }
+.ip-section {
+  position:relative;
+  overflow:hidden;
+  padding:clamp(25px,5vw,42px);
+  border:1px solid #8c73dc55;
+  border-radius:30px;
+  background:radial-gradient(ellipse at 5% 100%,#b69aff18,transparent 36%),linear-gradient(120deg,#151e2d,#10271f)
+}
+.ip-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:22px
+}
+.ip-head h2 {
+  max-width:680px
+}
+.ip-head p {
+  max-width:670px;
+  margin:11px 0 0;
+  color:#b5c5bd
+}
+.ip-sticker {
+  flex:none;
+  padding:10px 15px;
+  border:1px solid #ffffff40;
+  border-radius:17px;
+  color:#241c38;
+  background:var(--purple);
+  box-shadow:0 14px 35px #0004;
+  font-weight:950;
+  transform:rotate(7deg)
+}
+.ip-uses {
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-top:23px
+}
+.ip-use {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-height:75px;
+  padding:15px;
+  border:1px solid #ffffff18;
+  border-radius:17px;
+  color:#e2eee7;
+  background:#ffffff08;
+  font-weight:750
+}
+.ip-use span:first-child {
+  font-size:1.35rem
+}
+.ip-note {
+  margin:18px 0 0;
+  color:#a6b9ad;
+  font-size:.86rem
+}
 .feature {
   min-height:218px;
   padding:23px;
@@ -684,6 +743,9 @@ h1 {
   .app-card {
     width:260px
   }
+  .ip-uses {
+    grid-template-columns:1fr
+  }
   .orbit {
     width:340px
   }
@@ -741,6 +803,9 @@ h1 {
     align-items:start;
     flex-direction:column;
     gap:9px
+  }
+  .ip-head {
+    flex-direction:column
   }
   .flow {
     grid-template-columns:1fr
@@ -847,6 +912,17 @@ h1 {
       </div>
     </section>
 
+    <section class="section" aria-labelledby="ip-title">
+      <div class="ip-section">
+        <div class="ip-head">
+          <div><p class="kicker" data-t="ipKicker">یک انتخاب ویژه</p><h2 id="ip-title" data-t="ipTitle">IP ثابت؛ وقتی یک آدرس خروجی مشخص لازم داری</h2><p data-t="ipIntro">برای افرادی که دسترسی کاری‌شان به یک IP قابل پیش‌بینی وابسته است، مثل اتصال راه‌دور یا سرویس‌هایی که IP را در فهرست مجاز ثبت می‌کنند.</p></div>
+          <span class="ip-sticker" data-t="ipSticker">📍 آدرس پایدار</span>
+        </div>
+        <div class="ip-uses"><div class="ip-use"><span>🧑‍💻</span><span data-t="ipUse1">دسترسی راه‌دور به محیط کار</span></div><div class="ip-use"><span>🗝️</span><span data-t="ipUse2">سرویس‌های دارای فهرست IP مجاز</span></div><div class="ip-use"><span>🖥️</span><span data-t="ipUse3">اتصال پیوسته به سرور و پنل مدیریت</span></div></div>
+        <p class="ip-note" data-t="ipNote">IP ثابت فقط در پلن‌هایی ارائه می‌شود که این گزینه در توضیحاتشان درج شده باشد؛ موجودی، موقعیت و شرایط را پیش از خرید در ربات بررسی کن.</p>
+      </div>
+    </section>
+
     <section class="section" id="how">
       <div class="section-head"><div><p class="kicker" data-t="howKicker">شروع کار</p><h2 data-t="howTitle">از انتخاب تا اتصال، سه قدم</h2></div><p data-t="howIntro">خرید و پیوند حساب از مسیر رسمی انجام می‌شود؛ برای راهنمایی هم ربات در دسترس است.</p></div>
       <div class="flow"><article class="step"><h3 data-t="step1Title">نسخهٔ مناسب را بگیر</h3><p data-t="step1Text">سیستم‌عاملت را در بخش دانلود انتخاب کن و فایل رسمی منتشرشده را دریافت کن.</p></article><article class="step"><h3 data-t="step2Title">از ربات شروع کن</h3><p data-t="step2Text">در گفت‌وگوی خصوصی ربات، گزینهٔ اشتراک را دنبال کن و شمارهٔ تلگرامت را با دکمهٔ رسمی ربات تأیید کن.</p></article><article class="step"><h3 data-t="step3Title">حساب را به برنامه پیوند بده</h3><p data-t="step3Text">در Harmoney Pro گزینهٔ پیوند تلگرام را بزن و مراحل نمایش‌داده‌شده را کامل کن؛ سپس اشتراک‌های فعال را در برنامه ببین.</p></article></div>
@@ -882,8 +958,8 @@ h1 {
     const releasesUrl = `https://api.github.com/repos/${repo}/releases?per_page=100`;
     const repoReleasePage = `https://github.com/${repo}/releases`;
     const copy = {
-      fa:{navFeatures:"ویژگی‌ها",navHow:"شروع کار",navDownload:"دانلود",navFaq:"پرسش‌ها",buyTop:"خرید اشتراک",eyebrow:"یک تجربهٔ جمع‌وجور برای اتصال‌های تو",headline:'اتصال‌هات را<br><span class="shine">یک‌جا مدیریت کن.</span>',lead:"Harmoney Pro برای مدیریت اشتراک‌ها و پروفایل‌های سازگار VPN در یک اپ ساخته شده؛ نسخهٔ دستگاهت را بگیر و از ربات رسمی برای خرید یا تمدید راهنمایی بگیر.",downloadCta:"دریافت Harmoney Pro",botCta:"ورود به ربات تلگرام",micro1:"خروجی‌های رسمی و مستقیم",micro2:"خرید و تمدید از ربات",demoStatus:"آمادهٔ شروع",demoTitle:"اتصال امن، ساده",demoSubtitle:"پروفایل‌ها و اشتراک‌ها در کنار هم",demoFootLeft:"Harmoney Pro",demoFootRight:"آمادهٔ اتصال",stickerOne:"پرو، برای مسیر تو",stickerTwo:"همه‌چیز مرتب",stickerThree:"چند پلتفرم",featureKicker:"چرا Harmoney Pro؟",featureTitle:"ابزارهای لازم، بدون شلوغی",featureIntro:"یک محیط روشن برای مدیریت اتصال‌ها و دسترسی به اشتراک‌هایی که استفاده می‌کنی.",feature1Title:"اشتراک‌ها در یک‌جا",feature1Text:"اشتراک‌ها و پروفایل‌های سازگار را در برنامه اضافه و مدیریت کن؛ فایل‌های متداول مثل ‎.conf، ‎.ovpn، ‎.json و YAML پشتیبانی می‌شوند.",feature2Title:"انتخاب پروفایل دلخواه",feature2Text:"پروفایل یا سرویس موردنظرت را از داخل برنامه انتخاب کن و وضعیت اتصال را همان‌جا ببین.",feature3Title:"برای دستگاه‌های مختلف",feature3Text:"نسخه‌های منتشرشده برای Android، Windows، Linux و macOS از همین صفحه شناسایی و نمایش داده می‌شوند.",howKicker:"شروع کار",howTitle:"از انتخاب تا اتصال، سه قدم",howIntro:"خرید و پیوند حساب از مسیر رسمی انجام می‌شود؛ برای راهنمایی هم ربات در دسترس است.",step1Title:"نسخهٔ مناسب را بگیر",step1Text:"سیستم‌عاملت را در بخش دانلود انتخاب کن و فایل رسمی منتشرشده را دریافت کن.",step2Title:"از ربات شروع کن",step2Text:"در گفت‌وگوی خصوصی ربات، گزینهٔ اشتراک را دنبال کن و شمارهٔ تلگرامت را با دکمهٔ رسمی ربات تأیید کن.",step3Title:"حساب را به برنامه پیوند بده",step3Text:"در Harmoney Pro گزینهٔ پیوند تلگرام را بزن و مراحل نمایش‌داده‌شده را کامل کن؛ سپس اشتراک‌های فعال را در برنامه ببین.",botTag:"ربات رسمی هارمونی",botTitle:"خرید، تمدید و پیگیری اشتراک از تلگرام",botText:"برای دیدن پلن‌ها و مبلغ روز، خرید یا تمدید را از ربات انجام بده. وضعیت اشتراک و پرداخت‌ها هم از همان گفت‌وگو قابل پیگیری است. ربات برای ورود به حساب، رمز عبور Harmoney را از تو نمی‌خواهد.",openBot:"باز کردن ربات",downloadKicker:"دریافت نسخه",downloadTitle:"نسخهٔ دستگاهت را انتخاب کن",loading:"در حال بررسی تازه‌ترین نسخهٔ Pro…",androidTag:"موبایل و تبلت",desktopTag:"رایانه",androidText:"فایل نصب APK برای دستگاه‌های Android.",windowsText:"نصاب رسمی Windows، در صورت انتشار.",linuxText:"بستهٔ ‎.deb یا آرشیو Linux، در صورت انتشار.",macText:"نسخهٔ macOS، در صورت انتشار.",loadingShort:"در حال بررسی…",releaseLabel:"نسخهٔ فعلی:",allReleases:"همهٔ فایل‌ها و هش‌ها",freeTitle:"دنبال نسخهٔ رایگان هستی؟",freeText:"نسخهٔ Harmoney Free را از صفحهٔ انتشارهای رسمی بگیر.",freeCta:"دریافت Harmoney Free",faqKicker:"پرسش‌های کوتاه",faqTitle:"قبل از دانلود",faq1Q:"فایل‌های Pro از کجا می‌آیند؟",faq1A:"این صفحه Releaseهای Pro را از مخزن عمومی رسمی هارمونی می‌خواند. فایل‌ها فقط وقتی نمایش داده می‌شوند که برای آن پلتفرم در Release منتشر شده باشند.",faq2Q:"چطور اشتراک بخرم یا تمدید کنم؟",faq2A:"ربات رسمی را باز کن و گزینه‌های خرید یا تمدید را دنبال کن. مبلغ و جزئیات پرداخت در همان فرایند نمایش داده می‌شود.",faq3Q:"بعد از خرید چطور وارد اپ شوم؟",faq3A:"حساب تلگرام را در برنامه پیوند بده و شمارهٔ متعلق به حساب را با دکمهٔ رسمی ربات تأیید کن.",faq4Q:"اگر دانلود شروع نشد چه کنم؟",faq4A:"صفحهٔ همهٔ Releaseهای Pro را باز کن یا از ربات تلگرام برای راهنمایی کمک بگیر.",footer:"Harmoney Pro · دریافت از منبع رسمی",githubLink:"مخزن عمومی هارمونی",supportLink:"ربات و راهنما",backTop:"بازگشت به بالا ↑",fetchError:"نسخه‌ها بارگذاری نشدند؛ از صفحهٔ همهٔ انتشارها استفاده کن.",notPublished:"هنوز فایلی برای این سیستم‌عامل منتشر نشده",download:"دانلود نسخهٔ Pro",downloadFor:"دریافت",published:"انتشار:",copied:"پیوند کپی شد"},
-      en:{navFeatures:"Features",navHow:"Get started",navDownload:"Downloads",navFaq:"FAQ",buyTop:"Get a plan",eyebrow:"A clearer home for your connections",headline:'Your connections,<br><span class="shine">all in one place.</span>',lead:"Harmoney Pro helps you manage compatible VPN subscriptions and profiles in one app. Choose a build for your device and use the official bot for purchase or renewal.",downloadCta:"Get Harmoney Pro",botCta:"Open Telegram bot",micro1:"Official release files",micro2:"Plans and renewals in the bot",demoStatus:"Ready to start",demoTitle:"A simpler connection",demoSubtitle:"Profiles and subscriptions together",demoFootLeft:"Harmoney Pro",demoFootRight:"Ready to connect",stickerOne:"Pro for your route",stickerTwo:"Neatly organized",stickerThree:"Multiple platforms",featureKicker:"Why Harmoney Pro",featureTitle:"The tools you need, in one place",featureIntro:"A clear workspace to manage connections and the subscriptions you use.",feature1Title:"Subscriptions together",feature1Text:"Add and manage compatible subscriptions and profiles. Common formats such as .conf, .ovpn, .json, and YAML are supported.",feature2Title:"Choose a profile",feature2Text:"Select a profile or service in the app and check its connection status there.",feature3Title:"For different devices",feature3Text:"This page detects and lists published builds for Android, Windows, Linux, and macOS.",howKicker:"Get started",howTitle:"Three steps from download to setup",howIntro:"Purchases and account linking use the official flow; the bot can guide you.",step1Title:"Get your build",step1Text:"Choose your operating system in downloads and get its official published file.",step2Title:"Start with the bot",step2Text:"In the bot's private chat, follow the subscription prompts and verify your Telegram number with its official button.",step3Title:"Link your account",step3Text:"Choose Link Telegram in Harmoney Pro and follow the steps. Your active subscriptions will then appear in the app.",botTag:"Official Harmoney bot",botTitle:"Buy, renew, and check your subscription in Telegram",botText:"Open the bot to view current plans and prices, purchase or renew, and check payment status. The bot never asks for your Harmoney password.",openBot:"Open the bot",downloadKicker:"Downloads",downloadTitle:"Choose your device",loading:"Checking the latest Pro release…",androidTag:"Phone and tablet",desktopTag:"Desktop",androidText:"Android APK installer.",windowsText:"Official Windows installer, when published.",linuxText:"Linux .deb package or archive, when published.",macText:"macOS build, when published.",loadingShort:"Checking…",releaseLabel:"Current version:",allReleases:"All files and checksums",freeTitle:"Looking for the free edition?",freeText:"Get Harmoney Free from the official releases page.",freeCta:"Get Harmoney Free",faqKicker:"Quick answers",faqTitle:"Before you download",faq1Q:"Where do Pro files come from?",faq1A:"This page reads Pro releases from Harmoney's official public repository. A file appears only after it is published for that platform.",faq2Q:"How do I buy or renew?",faq2A:"Open the official bot and follow the purchase or renewal prompts. The amount and payment details are shown in that flow.",faq3Q:"How do I sign in after purchase?",faq3A:"Link your Telegram account in the app and verify the number belonging to that account with the bot's official button.",faq4Q:"What if a download does not start?",faq4A:"Open the page listing all Pro releases or ask the Telegram bot for help.",footer:"Harmoney Pro · Official downloads",githubLink:"Harmoney public repository",supportLink:"Bot and help",backTop:"Back to top ↑",fetchError:"Could not load releases. Use the all releases page.",notPublished:"No file has been published for this system yet",download:"Download Pro",downloadFor:"Get",published:"Published:",copied:"Link copied"}
+      fa:{navFeatures:"ویژگی‌ها",navHow:"شروع کار",navDownload:"دانلود",navFaq:"پرسش‌ها",buyTop:"خرید اشتراک",eyebrow:"یک تجربهٔ جمع‌وجور برای اتصال‌های تو",headline:'اتصال‌هات را<br><span class="shine">یک‌جا مدیریت کن.</span>',lead:"Harmoney Pro برای مدیریت اشتراک‌ها و پروفایل‌های سازگار VPN در یک اپ ساخته شده؛ نسخهٔ دستگاهت را بگیر و از ربات رسمی برای خرید یا تمدید راهنمایی بگیر.",downloadCta:"دریافت Harmoney Pro",botCta:"ورود به ربات تلگرام",micro1:"خروجی‌های رسمی و مستقیم",micro2:"خرید و تمدید از ربات",demoStatus:"آمادهٔ شروع",demoTitle:"اتصال، ساده‌تر",demoSubtitle:"پروفایل‌ها و اشتراک‌ها در کنار هم",demoFootLeft:"Harmoney Pro",demoFootRight:"آمادهٔ اتصال",stickerOne:"پرو، برای مسیر تو",stickerTwo:"همه‌چیز مرتب",stickerThree:"چند پلتفرم",featureKicker:"چرا Harmoney Pro؟",featureTitle:"ابزارهای لازم، بدون شلوغی",featureIntro:"یک محیط روشن برای مدیریت اتصال‌ها و دسترسی به اشتراک‌هایی که استفاده می‌کنی.",feature1Title:"اشتراک‌ها در یک‌جا",feature1Text:"اشتراک‌ها و پروفایل‌های سازگار را در برنامه اضافه و مدیریت کن؛ فایل‌های متداول مثل ‎.conf، ‎.ovpn، ‎.json و YAML پشتیبانی می‌شوند.",feature2Title:"انتخاب پروفایل دلخواه",feature2Text:"پروفایل یا سرویس موردنظرت را از داخل برنامه انتخاب کن و وضعیت اتصال را همان‌جا ببین.",feature3Title:"برای دستگاه‌های مختلف",feature3Text:"نسخه‌های منتشرشده برای Android، Windows، Linux و macOS از همین صفحه شناسایی و نمایش داده می‌شوند.",ipKicker:"یک انتخاب ویژه",ipTitle:"IP ثابت؛ وقتی یک آدرس خروجی مشخص لازم داری",ipIntro:"برای افرادی که دسترسی کاری‌شان به یک IP قابل پیش‌بینی وابسته است؛ مثل اتصال راه‌دور یا سرویس‌هایی که IP را در فهرست مجاز ثبت می‌کنند.",ipSticker:"📍 آدرس پایدار",ipUse1:"دسترسی راه‌دور به محیط کار",ipUse2:"سرویس‌های دارای فهرست IP مجاز",ipUse3:"اتصال پیوسته به سرور و پنل مدیریت",ipNote:"IP ثابت فقط در پلن‌هایی ارائه می‌شود که این گزینه در توضیحاتشان درج شده باشد؛ موجودی، موقعیت و شرایط را پیش از خرید در ربات بررسی کن.",howKicker:"شروع کار",howTitle:"از انتخاب تا اتصال، سه قدم",howIntro:"خرید و پیوند حساب از مسیر رسمی انجام می‌شود؛ برای راهنمایی هم ربات در دسترس است.",step1Title:"نسخهٔ مناسب را بگیر",step1Text:"سیستم‌عاملت را در بخش دانلود انتخاب کن و فایل رسمی منتشرشده را دریافت کن.",step2Title:"از ربات شروع کن",step2Text:"در گفت‌وگوی خصوصی ربات، گزینهٔ اشتراک را دنبال کن و شمارهٔ تلگرامت را با دکمهٔ رسمی ربات تأیید کن.",step3Title:"حساب را به برنامه پیوند بده",step3Text:"در Harmoney Pro گزینهٔ پیوند تلگرام را بزن و مراحل نمایش‌داده‌شده را کامل کن؛ سپس اشتراک‌های فعال را در برنامه ببین.",botTag:"ربات رسمی هارمونی",botTitle:"خرید، تمدید و پیگیری اشتراک از تلگرام",botText:"برای دیدن پلن‌ها و مبلغ روز، خرید یا تمدید را از ربات انجام بده. وضعیت اشتراک و پرداخت‌ها هم از همان گفت‌وگو قابل پیگیری است. ربات برای ورود به حساب، رمز عبور Harmoney را از تو نمی‌خواهد.",openBot:"باز کردن ربات",downloadKicker:"دریافت نسخه",downloadTitle:"نسخهٔ دستگاهت را انتخاب کن",loading:"در حال بررسی تازه‌ترین نسخهٔ Pro…",androidTag:"موبایل و تبلت",desktopTag:"رایانه",androidText:"فایل نصب APK برای دستگاه‌های Android.",windowsText:"نصاب رسمی Windows، در صورت انتشار.",linuxText:"بستهٔ ‎.deb یا آرشیو Linux، در صورت انتشار.",macText:"نسخهٔ macOS، در صورت انتشار.",loadingShort:"در حال بررسی…",releaseLabel:"نسخهٔ فعلی:",allReleases:"همهٔ فایل‌ها و هش‌ها",freeTitle:"دنبال نسخهٔ رایگان هستی؟",freeText:"نسخهٔ Harmoney Free را از صفحهٔ انتشارهای رسمی بگیر.",freeCta:"دریافت Harmoney Free",faqKicker:"پرسش‌های کوتاه",faqTitle:"قبل از دانلود",faq1Q:"فایل‌های Pro از کجا می‌آیند؟",faq1A:"این صفحه Releaseهای Pro را از مخزن عمومی رسمی هارمونی می‌خواند. فایل‌ها فقط وقتی نمایش داده می‌شوند که برای آن پلتفرم در Release منتشر شده باشند.",faq2Q:"چطور اشتراک بخرم یا تمدید کنم؟",faq2A:"ربات رسمی را باز کن و گزینه‌های خرید یا تمدید را دنبال کن. مبلغ و جزئیات پرداخت در همان فرایند نمایش داده می‌شود.",faq3Q:"بعد از خرید چطور وارد اپ شوم؟",faq3A:"حساب تلگرام را در برنامه پیوند بده و شمارهٔ متعلق به حساب را با دکمهٔ رسمی ربات تأیید کن.",faq4Q:"اگر دانلود شروع نشد چه کنم؟",faq4A:"صفحهٔ همهٔ Releaseهای Pro را باز کن یا از ربات تلگرام برای راهنمایی کمک بگیر.",footer:"Harmoney Pro · دریافت از منبع رسمی",githubLink:"مخزن عمومی هارمونی",supportLink:"ربات و راهنما",backTop:"بازگشت به بالا ↑",fetchError:"نسخه‌ها بارگذاری نشدند؛ از صفحهٔ همهٔ انتشارها استفاده کن.",notPublished:"هنوز فایلی برای این سیستم‌عامل منتشر نشده",download:"دانلود نسخهٔ Pro",downloadFor:"دریافت",published:"انتشار:",copied:"پیوند کپی شد"},
+      en:{navFeatures:"Features",navHow:"Get started",navDownload:"Downloads",navFaq:"FAQ",buyTop:"Get a plan",eyebrow:"A clearer home for your connections",headline:'Your connections,<br><span class="shine">all in one place.</span>',lead:"Harmoney Pro helps you manage compatible VPN subscriptions and profiles in one app. Choose a build for your device and use the official bot for purchase or renewal.",downloadCta:"Get Harmoney Pro",botCta:"Open Telegram bot",micro1:"Official release files",micro2:"Plans and renewals in the bot",demoStatus:"Ready to start",demoTitle:"A simpler connection",demoSubtitle:"Profiles and subscriptions together",demoFootLeft:"Harmoney Pro",demoFootRight:"Ready to connect",stickerOne:"Pro for your route",stickerTwo:"Neatly organized",stickerThree:"Multiple platforms",featureKicker:"Why Harmoney Pro",featureTitle:"The tools you need, in one place",featureIntro:"A clear workspace to manage connections and the subscriptions you use.",feature1Title:"Subscriptions together",feature1Text:"Add and manage compatible subscriptions and profiles. Common formats such as .conf, .ovpn, .json, and YAML are supported.",feature2Title:"Choose a profile",feature2Text:"Select a profile or service in the app and check its connection status there.",feature3Title:"For different devices",feature3Text:"This page detects and lists published builds for Android, Windows, Linux, and macOS.",ipKicker:"A dedicated option",ipTitle:"A fixed IP, when you need a consistent exit address",ipIntro:"Useful for people whose work access depends on a predictable IP, such as remote connections or services that use IP allowlists.",ipSticker:"📍 Consistent address",ipUse1:"Remote access to work systems",ipUse2:"Services with IP allowlists",ipUse3:"Ongoing access to servers and admin panels",ipNote:"A fixed IP is available only on plans that explicitly include it. Check availability, location, and terms in the bot before purchase.",howKicker:"Get started",howTitle:"Three steps from download to setup",howIntro:"Purchases and account linking use the official flow; the bot can guide you.",step1Title:"Get your build",step1Text:"Choose your operating system in downloads and get its official published file.",step2Title:"Start with the bot",step2Text:"In the bot's private chat, follow the subscription prompts and verify your Telegram number with its official button.",step3Title:"Link your account",step3Text:"Choose Link Telegram in Harmoney Pro and follow the steps. Your active subscriptions will then appear in the app.",botTag:"Official Harmoney bot",botTitle:"Buy, renew, and check your subscription in Telegram",botText:"Open the bot to view current plans and prices, purchase or renew, and check payment status. The bot never asks for your Harmoney password.",openBot:"Open the bot",downloadKicker:"Downloads",downloadTitle:"Choose your device",loading:"Checking the latest Pro release…",androidTag:"Phone and tablet",desktopTag:"Desktop",androidText:"Android APK installer.",windowsText:"Official Windows installer, when published.",linuxText:"Linux .deb package or archive, when published.",macText:"macOS build, when published.",loadingShort:"Checking…",releaseLabel:"Current version:",allReleases:"All files and checksums",freeTitle:"Looking for the free edition?",freeText:"Get Harmoney Free from the official releases page.",freeCta:"Get Harmoney Free",faqKicker:"Quick answers",faqTitle:"Before you download",faq1Q:"Where do Pro files come from?",faq1A:"This page reads Pro releases from Harmoney's official public repository. A file appears only after it is published for that platform.",faq2Q:"How do I buy or renew?",faq2A:"Open the official bot and follow the purchase or renewal prompts. The amount and payment details are shown in that flow.",faq3Q:"How do I sign in after purchase?",faq3A:"Link your Telegram account in the app and verify the number belonging to that account with the bot's official button.",faq4Q:"What if a download does not start?",faq4A:"Open the page listing all Pro releases or ask the Telegram bot for help.",footer:"Harmoney Pro · Official downloads",githubLink:"Harmoney public repository",supportLink:"Bot and help",backTop:"Back to top ↑",fetchError:"Could not load releases. Use the all releases page.",notPublished:"No file has been published for this system yet",download:"Download Pro",downloadFor:"Get",published:"Published:",copied:"Link copied"}
     };
     let language = "fa";
     const cards = [...document.querySelectorAll("[data-platform]")];
